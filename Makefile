@@ -1,4 +1,3 @@
-
 EE_BIN=Build/test.elf
 EE_OBJS=Build/Intermediate/main.o
 
@@ -15,15 +14,15 @@ ISO_TGT=Build/test.iso
 include $(PS2SDK)/samples/Makefile.eeglobal
 include $(PS2SDK)/samples/Makefile.pref
 
+$(EE_OBJS): main.c
+	$(EE_CC) $(EE_CFLAGS) $(EE_INCS) -c $< -o $@
+
 all: $(ISO_TGT)
-
-$(ISO_TGT): $(EE_BIN)
-	mkisofs -l -o $(ISO_TGT) $(EE_BIN) SYSTEM.CNF
-
-.PHONY: docker-build
-docker-build:
-	docker run -v $(shell pwd):/src ps2build make
 
 .PHONY: clean
 clean:
 	rm -rf $(ISO_TGT) $(EE_BIN) $(EE_OBJS)
+
+.PHONY: iso
+iso:
+	mkisofs -l -o $(ISO_TGT) $(EE_BIN) SYSTEM.CNF
