@@ -87,7 +87,7 @@ int draw(){
 
 int main(){
     printf("Hello World!\n");
-
+    
     // Initialize DMA controller
     dma_channel_initialize(DMA_CHANNEL_GIF, 0, 0);
     dma_channel_fast_waits(DMA_CHANNEL_GIF);

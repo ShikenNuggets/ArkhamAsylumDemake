@@ -4,11 +4,11 @@ OBJ_DIR = $(BUILD_DIR)/Intermediate
 PS2SDK=/usr/local/ps2dev/ps2sdk
 
 EE_BIN=$(BUILD_DIR)/test.elf
-EE_OBJS=$(patsubst %.c, $(OBJ_DIR)/%.o, $(wildcard *.c))
+EE_OBJS=$(patsubst %.cpp, $(OBJ_DIR)/%.obj, $(wildcard *.cpp))
 
 EE_LIBS= -ldma -lgraph -ldraw -lkernel -ldebug
 
-EE_CFLAGS += -Wall --std=c99
+EE_CXXFLAGS += -Wall --std=c++17
 EE_LDFLAGS = -L$(PSDSDK)/ee/common/lib -L$(PS2SDK)/ee/lib
 
 ISO_TGT=Build/test.iso
@@ -16,8 +16,14 @@ ISO_TGT=Build/test.iso
 include $(PS2SDK)/samples/Makefile.eeglobal
 include $(PS2SDK)/samples/Makefile.pref
 
-$(OBJ_DIR)/%.o: %.c
-	$(EE_CC) $(EE_CFLAGS) $(EE_INCS) -c $< -o $@
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+
+$(OBJ_DIR)/%.obj: %.cpp | $(OBJ_DIR)
+	$(EE_CXX) $(EE_CXXFLAGS) $(EE_INCS) -c $< -o $@
 
 all: $(ISO_TGT)
 
