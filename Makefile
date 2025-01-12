@@ -1,10 +1,11 @@
+SRC_DIR = Source
 BUILD_DIR = Build
 OBJ_DIR = $(BUILD_DIR)/Intermediate
 
 PS2SDK=/usr/local/ps2dev/ps2sdk
 
 EE_BIN=$(BUILD_DIR)/test.elf
-EE_OBJS=$(patsubst %.cpp, $(OBJ_DIR)/%.obj, $(wildcard *.cpp))
+EE_OBJS=$(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.obj, $(wildcard $(SRC_DIR)/*.cpp))
 
 EE_LIBS= -ldma -lgraph -ldraw -lkernel -ldebug
 
@@ -22,14 +23,14 @@ $(BUILD_DIR):
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
-$(OBJ_DIR)/%.obj: %.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/%.obj: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(EE_CXX) $(EE_CXXFLAGS) $(EE_INCS) -c $< -o $@
 
 all: $(ISO_TGT)
 
 .PHONY: clean
 clean:
-	rm -rf $(ISO_TGT) $(EE_BIN) $(EE_OBJS)
+	rm -rf $(BUILD_DIR)/*
 
 .PHONY: iso
 iso:
