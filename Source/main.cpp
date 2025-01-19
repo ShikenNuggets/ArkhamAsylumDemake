@@ -102,9 +102,9 @@ int main(){
 		//q = draw_disable_tests(q, 0, &zBuffer);
 		q = draw_clear(q, 0, static_cast<float>(Renderer::gOffsetX) - (SCREEN_WIDTH / 2.0f), static_cast<float>(Renderer::gOffsetY) - (SCREEN_HEIGHT / 2.0f), SCREEN_WIDTH, SCREEN_HEIGHT, 20, 20, 255);
 		//q = draw_enable_tests(q, 0, &zBuffer);
-		//q = draw(q);
-		std::memcpy(q, m.buffer, m.bufferLen);
-		q += m.bufferLen / 16;
+		q = draw(q);
+		//std::memcpy(q, m.buffer, m.bufferLen);
+		//q += m.bufferLen / 16;
 
 		q = draw_finish(q);
 		dma_channel_send_normal(DMA_CHANNEL_GIF, drawBuf, q - drawBuf, 0, 0);
