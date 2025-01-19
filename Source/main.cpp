@@ -1,3 +1,4 @@
+#include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -13,6 +14,7 @@
 #include <dma.h>
 #include <dma_tags.h>
 
+#include "Mesh.hpp"
 #include "Renderer.hpp"
 #include "Utils.hpp"
 
@@ -68,10 +70,13 @@ qword_t* draw(qword_t* q){
 	return q;
 }
 
+static constexpr const char* cubeModelFile = "host:cube.gif";
+
 int main(){
-	printf("Hello World!\n");
+	printf("[PS2E] Hello World!\n");
 	
-	//gBuf = static_cast<qword_t*>(std::malloc(gBufSize));
+	constexpr size_t drawBufSize = sizeof(qword_t) * 20'000;
+	qword_t* drawBuf = static_cast<qword_t*>(std::malloc(drawBufSize));
 
 	// Initialize DMA controller
 	dma_channel_initialize(DMA_CHANNEL_GIF, 0, 0);
@@ -86,18 +91,23 @@ int main(){
 
 	Renderer::gs_init(ds, GS_PSM_32, GS_PSMZ_24);
 
+	Mesh m = Mesh(cubeModelFile);
+
 	graph_wait_vsync();
 	while(true){
 		dma_wait_fast();
-		memset(DrawState::gCmdBuffer, 0, DrawState::gCmdBufferSize);
-		qword_t* q = DrawState::gCmdBuffer;
+		memset(drawBuf, 0, drawBufSize);
+		qword_t* q = drawBuf;
 
 		//q = draw_disable_tests(q, 0, &zBuffer);
 		q = draw_clear(q, 0, static_cast<float>(Renderer::gOffsetX) - (SCREEN_WIDTH / 2.0f), static_cast<float>(Renderer::gOffsetY) - (SCREEN_HEIGHT / 2.0f), SCREEN_WIDTH, SCREEN_HEIGHT, 20, 20, 255);
 		//q = draw_enable_tests(q, 0, &zBuffer);
-		q = draw(q);
+		//q = draw(q);
+		std::memcpy(q, m.buffer, m.bufferLen);
+		q += m.bufferLen / 16;
+
 		q = draw_finish(q);
-		dma_channel_send_normal(DMA_CHANNEL_GIF, DrawState::gCmdBuffer, q - DrawState::gCmdBuffer, 0, 0);
+		dma_channel_send_normal(DMA_CHANNEL_GIF, drawBuf, q - drawBuf, 0, 0);
 		draw_wait_finish();
 
 		graph_wait_vsync();
