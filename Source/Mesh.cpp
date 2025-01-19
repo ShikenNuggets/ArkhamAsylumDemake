@@ -42,7 +42,7 @@ Mesh::Mesh(const char* fileName){
 
 	// Create GIFTag, set registers via A+D
 	q->dw[0] = 0x1000000000000002;
-	dw[1] = 0x000000000000000e;
+	q->dw[1] = 0x000000000000000e;
 	q++;
 
 	// Set PRIM = Triangle

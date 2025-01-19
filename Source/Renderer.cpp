@@ -12,9 +12,9 @@
 qword_t* DrawState::gCmdBuffer = nullptr;
 
 int Renderer::gs_init(DrawState& ds, int psm, int psmz){
-    if(DrawState::gCmdBuffer == nullptr){
-        DrawState::gCmdBuffer = static_cast<qword_t*>(std::malloc(DrawState::gCmdBufferSize)); // TODO - RAII, custom memory allocator
-    }
+	if(DrawState::gCmdBuffer == nullptr){
+		DrawState::gCmdBuffer = static_cast<qword_t*>(std::malloc(DrawState::gCmdBufferSize)); // TODO - RAII, custom memory allocator
+	}
 
 	ds.frameBuffer.address = graph_vram_allocate(ds.width, ds.height, psm, GRAPH_ALIGN_PAGE);
 	ds.frameBuffer.width = ds.width;
