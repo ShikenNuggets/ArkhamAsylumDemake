@@ -72,6 +72,24 @@ qword_t* draw(qword_t* q){
 
 static constexpr const char* cubeModelFile = "host:cube.gif";
 
+void mesh_transform(const Mesh& mesh, char* buffer, int cx, int cy, float scale, float tx, float ty)
+{
+	const int stride = mesh.vertexSize * 16;
+	for(int i = 0; i < mesh.numVertex; i++){
+		char* const vStart = buffer + (stride * i);
+		float* pos = reinterpret_cast<float*>(vStart) + (mesh.vertexPosOffset * 16);
+		float x = pos[0];
+		float y = pos[1];
+		float z = pos[2];
+		//float w = pos[3];
+		
+		*((uint32_t*)pos) = ftoi4((x * scale) + tx) + cx;
+		*((uint32_t*)(pos + 1)) = ftoi4((y * scale) + ty) + cy;
+		*((uint32_t*)(pos + 2)) = static_cast<int>(z);
+		pos[3] = 0.0f;
+	}
+}
+
 int main(){
 	printf("[PS2E] Hello World!\n");
 	
@@ -96,21 +114,26 @@ int main(){
 	graph_wait_vsync();
 	while(true){
 		dma_wait_fast();
-		memset(drawBuf, 0, drawBufSize);
 		qword_t* q = drawBuf;
+		memset(drawBuf, 0, drawBufSize);
 
-		//q = draw_disable_tests(q, 0, &zBuffer);
+		//q = draw_disable_tests(q, 0, &ds.zBuffer);
 		q = draw_clear(q, 0, static_cast<float>(Renderer::gOffsetX) - (SCREEN_WIDTH / 2.0f), static_cast<float>(Renderer::gOffsetY) - (SCREEN_HEIGHT / 2.0f), SCREEN_WIDTH, SCREEN_HEIGHT, 20, 20, 255);
-		//q = draw_enable_tests(q, 0, &zBuffer);
-		q = draw(q);
-		//std::memcpy(q, m.buffer, m.bufferLen);
-		//q += m.bufferLen / 16;
+		//q = draw_enable_tests(q, 0, &ds.zBuffer);
+		//q = draw(q);
 
+		static constexpr float cx = Renderer::gOffsetX + (SCREEN_WIDTH / 2.0f);
+		static constexpr float cy = Renderer::gOffsetY + (SCREEN_HEIGHT / 2.0f);
+
+		qword_t* modelVertsStart = q;
+
+		std::memcpy(q, m.buffer, m.bufferLen);
+		q += (m.bufferLen / 16);
 		q = draw_finish(q);
+		mesh_transform(m, reinterpret_cast<char*>(modelVertsStart + 4), ftoi4(cx), ftoi4(cy), 20.0f, 0.0f, 0.0f);
+
 		dma_channel_send_normal(DMA_CHANNEL_GIF, drawBuf, q - drawBuf, 0, 0);
 		draw_wait_finish();
-
 		graph_wait_vsync();
-		//sleep(2);
 	}
 }

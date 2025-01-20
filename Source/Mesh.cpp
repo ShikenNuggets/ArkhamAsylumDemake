@@ -11,29 +11,36 @@
 #include <gs_gp.h>
 
 static constexpr uint64_t red = 0xf0;
-static constexpr uint64_t blue = 0x0f;
-static constexpr uint64_t green = 0x0f;
+static constexpr uint64_t blue = 0x0;
+static constexpr uint64_t green = 0x0;
 
 static constexpr size_t ModelBufferPrefix = (4 * sizeof(qword_t));
 
 Mesh::Mesh(const char* fileName){
 	std::printf("[PS2E] Begin mesh init...\n");
 
-	uint8_t* rawBuffer;
-	const size_t bufferLen = LoadFile(fileName, rawBuffer);
-	if(bufferLen % 16 != 0){
+	uint8_t* rawBuffer = nullptr;
+	const size_t bLen = LoadFile(fileName, rawBuffer);
+	if(rawBuffer == nullptr || bLen == 0){
+		std::printf("[PS2E] Buffer for loading file contents was not allocated successfully!\n");
+		return;
+	}
+
+	if(bLen % 16 != 0){
 		std::printf("[PS2E] Invalid buffer length!\n");
 		return; // TODO - More sophisticated error handling
 	}
 
-	std::printf("[PS2E] Malloc buffer %d...\n", bufferLen + ModelBufferPrefix);
-	buffer = static_cast<qword_t*>(std::malloc(bufferLen + ModelBufferPrefix));
+	bufferLen = bLen + ModelBufferPrefix;
+	std::printf("[PS2E] Malloc buffer of %d bytes for mesh...\n", bufferLen);
+	buffer = static_cast<qword_t*>(std::malloc(bufferLen));
 	qword_t* q = buffer;
 
-	numVertex = bufferLen / 16;
-	//if(numVertex % 3 != 0){
-		//throw nullptr;
-	//}
+	numVertex = bLen / 16;
+	if(numVertex % 3 != 0){
+		std::printf("[PS2E] Models are expected to have 3 vertices for every face!\n");
+		return;
+	}
 
 	vertexSize = 1;
 	vertexPosOffset = 0;
@@ -55,11 +62,11 @@ Mesh::Mesh(const char* fileName){
 	q->dw[1] = GS_REG_RGBAQ;
 	q++;
 
-	q->dw[0] = 0x1000000000000000 | (numFaces & 0x3fff);
+	q->dw[0] = 0x3000000000000000 | (numFaces & 0x3fff);
 	q->dw[1] = 0x0000000000000555;
 	q++;
 
-	std::memcpy(q, rawBuffer, bufferLen);
+	std::memcpy(q, rawBuffer, bLen);
 }
 
 
@@ -82,19 +89,27 @@ size_t Mesh::LoadFile(const char* fileName, uint8_t*& outBuffer){
 
 	if(std::fseek(f, 0, SEEK_END) != 0){
 		std::printf("[PS2E] File seek failed! Error: %s\n", std::strerror(errno));
+		std::fclose(f);
 		return 0;
 	}
 
 	int len = std::ftell(f);
+	if(len > 310 * 1024){
+		std::printf("[PS2E] File too big!\n");
+		std::fclose(f);
+		return 0;
+	}
 
 	if(std::fseek(f, 0, SEEK_SET) != 0){
 		std::printf("[PS2E] File seek failed! Error: %s\n", std::strerror(errno));
+		std::fclose(f);
 		return 0;
 	}
 
 	outBuffer = static_cast<uint8_t*>(std::malloc(len));
 	if(outBuffer == nullptr){
 		std::printf("[PS2E] Malloc failed - we are out of memory!\n");
+		std::fclose(f);
 		return 0;
 	}
 
