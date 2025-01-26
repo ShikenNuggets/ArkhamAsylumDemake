@@ -1,5 +1,5 @@
-#ifndef PS2E_DEPTH_BUFFER_H
-#define PS2E_DEPTH_BUFFER_H
+#ifndef PS2E_DEPTH_BUFFER_HPP
+#define PS2E_DEPTH_BUFFER_HPP
 
 #include <draw_buffers.h>
 
@@ -15,4 +15,4 @@ private:
 	zbuffer_t zBuffer;
 };
 
-#endif //!PS2E_DEPTH_BUFFER_H
+#endif //!PS2E_DEPTH_BUFFER_HPP

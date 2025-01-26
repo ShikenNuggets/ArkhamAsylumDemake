@@ -1,7 +1,7 @@
 #ifndef PS2E_FRAME_BUFFER_H
 #define PS2E_FRAME_BUFFER_H
 
-#include "draw_buffers.h"
+#include <draw_buffers.h>
 
 class FrameBuffer{
 public:

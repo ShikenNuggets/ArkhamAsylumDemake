@@ -1,4 +1,4 @@
-#include "FrameBuffer.h"
+#include "FrameBuffer.hpp"
 
 #include <draw.h>
 #include <graph.h>

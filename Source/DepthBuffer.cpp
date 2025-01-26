@@ -1,4 +1,4 @@
-#include "DepthBuffer.h"
+#include "DepthBuffer.hpp"
 
 #include <draw.h>
 #include <gs_psm.h>

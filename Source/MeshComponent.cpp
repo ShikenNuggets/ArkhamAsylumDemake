@@ -31,7 +31,11 @@ MeshComponent::MeshComponent(){
 	color.q = 1.0f;
 }
 
-MeshComponent::~MeshComponent(){}
+MeshComponent::~MeshComponent(){
+	free(transformedVerts);
+	free(vertexBuffer);
+	free(colorBuffer);
+}
 
 void MeshComponent::Update(MATRIX& localScreen){
 	calculate_vertices(transformedVerts, vertex_count, vertices, localScreen);

@@ -9,6 +9,8 @@
 #
 */
 
+#include <math3d.h>
+
  int points_count = 36;
 
  int points[36] = {

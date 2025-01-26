@@ -2,7 +2,7 @@
 
 GameObject::GameObject() : position{ 0.0f, 0.0f, 0.0f, 0.0f }, rotation{ 0.0f, 0.0f, 0.0f, 0.0f }, mesh(){}
 
-GameObject::~GameObject(){}
+GameObject::~GameObject() = default;
 
 void GameObject::Move(float x, float y, float z){
 	position[0] += x;
