@@ -19,11 +19,12 @@
 #include "Camera.hpp"
 #include "DepthBuffer.h"
 #include "FrameBuffer.h"
+#include "GameObject.hpp"
 #include "Mesh.hpp"
 #include "Renderer.hpp"
 #include "Utils.hpp"
 
-#include "mesh_data.h"
+//#include "mesh_data.h"
 
 static constexpr int gScreenWidth = 640;
 static constexpr int gScreenHeight = 480;
@@ -147,58 +148,26 @@ void mesh_transform(const Mesh& mesh, char* buffer, int cx, int cy, float scale,
 // 	}
 // }
 
-VECTOR object_position = { 0.0f, 0.0f, 0.0f, 1.0f };
-VECTOR object_rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
-
 int render(FrameBuffer& frame, DepthBuffer& depth){
-	Camera camera;
-
-	// Matrices to setup the 3D environment and camera
-	MATRIX local_world;
-	MATRIX world_view;
-	MATRIX view_screen;
-	MATRIX local_screen;
-
-	VECTOR *temp_vertices;
-
-	prim_t prim;
-	color_t color;
-
-	xyz_t   *verts;
-	color_t *colors;
+	//prim_t prim;
+	//color_t color;
 
 	// The data packets for double buffering dma sends.
-	packet_t *packets[2];
-	packet_t *current;
-	qword_t *dmatag;
+	packet_t* packets[2];
+	packet_t* current;
 
-	packets[0] = packet_init(100,PACKET_NORMAL);
-	packets[1] = packet_init(100,PACKET_NORMAL);
+	packets[0] = packet_init(100, PACKET_NORMAL);
+	packets[1] = packet_init(100, PACKET_NORMAL);
 
-	// Allocate calculation space.
-	temp_vertices = static_cast<VECTOR*>(aligned_alloc(128, sizeof(VECTOR) * vertex_count));
+	GameObject object;
+	GameObject object2;
+	Camera camera;
 
-	// Allocate register space.
-	verts  = static_cast<xyz_t*>(aligned_alloc(128, sizeof(vertex_t) * vertex_count));
-	colors = static_cast<color_t*>(aligned_alloc(128, sizeof(color_t)  * vertex_count));
-
-	// Define the triangle primitive we want to use.
-	prim.type = PRIM_TRIANGLE;
-	prim.shading = PRIM_SHADE_GOURAUD;
-	prim.mapping = DRAW_DISABLE;
-	prim.fogging = DRAW_DISABLE;
-	prim.blending = DRAW_DISABLE;
-	prim.antialiasing = DRAW_ENABLE;
-	prim.mapping_type = PRIM_MAP_ST;
-	prim.colorfix = PRIM_UNFIXED;
-
-	color.r = 0x80;
-	color.g = 0x80;
-	color.b = 0x80;
-	color.a = 0x80;
-	color.q = 1.0f;
+	object.Move(-16.0f, 0.0f, 0.0f);
+	object2.Move(16.0f, 0.0f, 0.0f);
 
 	// Create the view_screen matrix.
+	MATRIX view_screen;
 	create_view_screen(view_screen, graph_aspect_ratio(), -3.00f, 3.00f, -3.00f, 3.00f, 1.00f, 2000.00f);
 
 	// Wait for any previous dma transfers to finish before starting.
@@ -207,65 +176,56 @@ int render(FrameBuffer& frame, DepthBuffer& depth){
 	// The main loop...
 	int context = 0;
 	while(true){
-		qword_t *q;
+		qword_t* q = nullptr;
 
 		current = packets[context];
 
 		// Spin the cube a bit.
-		object_rotation[0] += 0.008f; //while (object_rotation[0] > 3.14f) { object_rotation[0] -= 6.28f; }
-		object_rotation[1] += 0.012f; //while (object_rotation[1] > 3.14f) { object_rotation[1] -= 6.28f; }
+		object.Rotate(0.008f, 0.012f, 0.0f);
+		object2.Rotate(-0.007f, 0.013f, 0.0f);
 
 		// Create the local_world matrix.
-		create_local_world(local_world, object_position, object_rotation);
+		MATRIX local_world;
+		object.GetLocalWorld(local_world);
 
 		// Create the world_view matrix.
-		create_world_view(world_view, camera.position, camera.rotation);
+		MATRIX world_view;
+		camera.GetWorldView(world_view);
 
 		// Create the local_screen matrix.
+		MATRIX local_screen;
 		create_local_screen(local_screen, local_world, world_view, view_screen);
+		
+		object.GetMesh().Update(local_screen);
 
-		// Calculate the vertex values.
-		calculate_vertices(temp_vertices, vertex_count, vertices, local_screen);
-
-		// Convert floating point vertices to fixed point and translate to center of screen.
-		draw_convert_xyz(verts, 2048, 2048, 32, vertex_count, (vertex_f_t*)temp_vertices);
-
-		// Convert floating point colours to fixed point.
-		draw_convert_rgbq(colors, vertex_count, (vertex_f_t*)temp_vertices, (color_f_t*)colours, 0x80);
+		object2.GetLocalWorld(local_world);
+		create_local_screen(local_screen, local_world, world_view, view_screen);
+		object2.GetMesh().Update(local_screen);
 
 		// Grab our dmatag pointer for the dma chain.
-		dmatag = current->data;
+		qword_t* dmatag = current->data;
 
 		// Now grab our qword pointer and increment past the dmatag.
 		q = dmatag;
 		q++;
 
 		// Clear framebuffer but don't update zbuffer.
-		q = draw_disable_tests(q,0,depth.Get());
-		q = draw_clear(q,0,2048.0f-320.0f,2048.0f-240.0f,640,480,0x00,0x00,0x00);
-		q = draw_enable_tests(q,0,depth.Get());
+		q = draw_disable_tests(q, 0, depth.Get());
+		q = draw_clear(q, 0, Renderer::gOffsetX - (gScreenWidth / 2.0f), Renderer::gOffsetY - (gScreenHeight / 2.0f), gScreenWidth, gScreenHeight, 0x0, 0x0, 0x0);
+		q = draw_enable_tests(q, 0, depth.Get());
 
-		// Draw the triangles using triangle primitive type.
-		q = draw_prim_start(q,0,&prim, &color);
-
-		for(int i = 0; i < points_count; i++)
-		{
-			q->dw[0] = colors[points[i]].rgbaq;
-			q->dw[1] = verts[points[i]].xyz;
-			q++;
-		}
-
-		q = draw_prim_end(q,2,DRAW_RGBAQ_REGLIST);
+		q = object.GetMesh().Render(q);
+		q = object2.GetMesh().Render(q);
 
 		// Setup a finish event.
 		q = draw_finish(q);
 
 		// Define our dmatag for the dma chain.
-		DMATAG_END(dmatag,(q-current->data)-1,0,0,0);
+		DMATAG_END(dmatag, (q - current->data) - 1, 0, 0, 0);
 
 		// Now send our current dma chain.
 		dma_wait_fast();
-		dma_channel_send_chain(DMA_CHANNEL_GIF,current->data, q - current->data, 0, 0);
+		dma_channel_send_chain(DMA_CHANNEL_GIF, current->data, q - current->data, 0, 0);
 
 		// Now switch our packets so we can process data while the DMAC is working.
 		context ^= 1;

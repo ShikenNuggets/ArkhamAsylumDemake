@@ -8,6 +8,9 @@ public:
 	Camera();
 	~Camera();
 
+	void GetWorldView(MATRIX& mat);
+
+private:
 	VECTOR position;
 	VECTOR rotation;
 };
