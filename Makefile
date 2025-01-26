@@ -7,7 +7,7 @@ PS2SDK=/usr/local/ps2dev/ps2sdk
 EE_BIN=$(BUILD_DIR)/test.elf
 EE_OBJS=$(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.obj, $(wildcard $(SRC_DIR)/*.cpp))
 
-EE_LIBS= -ldma -lgraph -ldraw -lkernel -ldebug
+EE_LIBS= -ldma -lgraph -ldraw -lkernel -ldebug -lpacket -lmath3d
 
 EE_CXXFLAGS += -Wall --std=c++17
 EE_LDFLAGS = -L$(PSDSDK)/ee/common/lib -L$(PS2SDK)/ee/lib
