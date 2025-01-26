@@ -1,10 +1,10 @@
+#include <cstdlib>
 #include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
 #include <unistd.h>
-#include <malloc.h>
 
 #include <draw.h>
 #include <draw2d.h>
@@ -16,6 +16,7 @@
 #include <dma_tags.h>
 #include <packet.h>
 
+#include "Camera.hpp"
 #include "DepthBuffer.h"
 #include "FrameBuffer.h"
 #include "Mesh.hpp"
@@ -24,8 +25,8 @@
 
 #include "mesh_data.h"
 
-#define SCREEN_WIDTH 640
-#define SCREEN_HEIGHT 448
+static constexpr int gScreenWidth = 640;
+static constexpr int gScreenHeight = 480;
 
 static int tri[] = {
 	320, 50, 0,
@@ -146,36 +147,11 @@ void mesh_transform(const Mesh& mesh, char* buffer, int cx, int cy, float scale,
 // 	}
 // }
 
-VECTOR object_position = { 0.00f, 0.00f, 0.00f, 1.00f };
-VECTOR object_rotation = { 0.00f, 0.00f, 0.00f, 1.00f };
-
-VECTOR camera_position = { 0.00f, 0.00f, 100.00f, 1.00f };
-VECTOR camera_rotation = { 0.00f, 0.00f,   0.00f, 1.00f };
-
-void init_drawing_environment(FrameBuffer& frame, DepthBuffer& depth){
-	packet_t *packet = packet_init(16,PACKET_NORMAL);
-
-	// This is our generic qword pointer.
-	qword_t *q = packet->data;
-
-	// This will setup a default drawing environment.
-	q = draw_setup_environment(q, 0, frame.Get(), depth.Get());
-
-	// Now reset the primitive origin to 2048-width/2,2048-height/2.
-	q = draw_primitive_xyoffset(q,0,(2048-320),(2048-240));
-
-	// Finish setting up the environment.
-	q = draw_finish(q);
-
-	// Now send the packet, no need to wait since it's the first.
-	dma_channel_send_normal(DMA_CHANNEL_GIF,packet->data,q - packet->data, 0, 0);
-	dma_wait_fast();
-
-	packet_free(packet);
-}
+VECTOR object_position = { 0.0f, 0.0f, 0.0f, 1.0f };
+VECTOR object_rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 int render(FrameBuffer& frame, DepthBuffer& depth){
-	int context = 0;
+	Camera camera;
 
 	// Matrices to setup the 3D environment and camera
 	MATRIX local_world;
@@ -200,11 +176,11 @@ int render(FrameBuffer& frame, DepthBuffer& depth){
 	packets[1] = packet_init(100,PACKET_NORMAL);
 
 	// Allocate calculation space.
-	temp_vertices = static_cast<VECTOR*>(memalign(128, sizeof(VECTOR) * vertex_count));
+	temp_vertices = static_cast<VECTOR*>(aligned_alloc(128, sizeof(VECTOR) * vertex_count));
 
 	// Allocate register space.
-	verts  = static_cast<xyz_t*>(memalign(128, sizeof(vertex_t) * vertex_count));
-	colors = static_cast<color_t*>(memalign(128, sizeof(color_t)  * vertex_count));
+	verts  = static_cast<xyz_t*>(aligned_alloc(128, sizeof(vertex_t) * vertex_count));
+	colors = static_cast<color_t*>(aligned_alloc(128, sizeof(color_t)  * vertex_count));
 
 	// Define the triangle primitive we want to use.
 	prim.type = PRIM_TRIANGLE;
@@ -229,6 +205,7 @@ int render(FrameBuffer& frame, DepthBuffer& depth){
 	dma_wait_fast();
 
 	// The main loop...
+	int context = 0;
 	while(true){
 		qword_t *q;
 
@@ -242,7 +219,7 @@ int render(FrameBuffer& frame, DepthBuffer& depth){
 		create_local_world(local_world, object_position, object_rotation);
 
 		// Create the world_view matrix.
-		create_world_view(world_view, camera_position, camera_rotation);
+		create_world_view(world_view, camera.position, camera.rotation);
 
 		// Create the local_screen matrix.
 		create_local_screen(local_screen, local_world, world_view, view_screen);
@@ -309,12 +286,9 @@ int main(){
 	dma_channel_initialize(DMA_CHANNEL_GIF, nullptr, 0);
 	dma_channel_fast_waits(DMA_CHANNEL_GIF);
 
-	FrameBuffer frame = FrameBuffer(640, 480);
-	DepthBuffer depth = DepthBuffer(640, 480);
+	Renderer renderer = Renderer(640, 480);
 
-	init_drawing_environment(frame, depth);
-
-	render(frame, depth);
+	render(renderer.GetFrameBuffer(), renderer.GetDepthBuffer());
 
 	return 0;
 }
