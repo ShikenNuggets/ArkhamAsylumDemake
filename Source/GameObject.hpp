@@ -13,7 +13,7 @@ public:
 	void Move(float x, float y, float z);
 	void Rotate(float x, float y, float z);
 
-	void GetLocalWorld(MATRIX& mat);
+	void GetLocalWorld(MATRIX& mat); //TODO - This should be const
 
 	const MeshComponent& GetMesh() const{ return mesh; }
 	MeshComponent& GetMesh(){ return mesh; }

@@ -8,7 +8,7 @@ public:
 	Camera();
 	~Camera();
 
-	void GetWorldView(MATRIX& mat);
+	void GetWorldView(MATRIX& mat); //TODO - This should be const
 
 private:
 	VECTOR position;
