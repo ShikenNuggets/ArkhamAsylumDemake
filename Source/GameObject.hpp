@@ -3,7 +3,7 @@
 
 #include <math3d.h>
 
-#include "MeshComponent.hpp"
+#include "Graphics/MeshComponent.hpp"
 
 class GameObject{
 public:

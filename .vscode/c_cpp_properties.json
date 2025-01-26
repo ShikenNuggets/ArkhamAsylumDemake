@@ -21,6 +21,7 @@
             "name": "PS2",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/Source/Graphics",
                 "${env:PS2SDK}/common/include",
                 "${env:PS2SDK}/ee/include",
                 "${env:PS2SDK}/iop/include"

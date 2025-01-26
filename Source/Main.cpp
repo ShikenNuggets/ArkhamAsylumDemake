@@ -1,10 +1,10 @@
 #include <dma.h>
 #include <dma_tags.h>
 
-#include "Camera.hpp"
 #include "GameObject.hpp"
-#include "Renderer.hpp"
 #include "Utils.hpp"
+#include "Graphics/Camera.hpp"
+#include "Graphics/Renderer.hpp"
 
 static constexpr int gScreenWidth = 640;
 static constexpr int gScreenHeight = 480;
