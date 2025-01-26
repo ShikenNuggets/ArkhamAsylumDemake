@@ -16,6 +16,8 @@
 #include <dma_tags.h>
 #include <packet.h>
 
+#include "DepthBuffer.h"
+#include "FrameBuffer.h"
 #include "Mesh.hpp"
 #include "Renderer.hpp"
 #include "Utils.hpp"
@@ -75,6 +77,8 @@ qword_t* draw(qword_t* q){
 }
 
 static constexpr const char* cubeModelFile = "host:cube.gif";
+
+void* __gxx_personality_v0; //Need this to be defined somewhere due to exception handling being disabled
 
 void mesh_transform(const Mesh& mesh, char* buffer, int cx, int cy, float scale, float tx, float ty)
 {
@@ -148,36 +152,17 @@ VECTOR object_rotation = { 0.00f, 0.00f, 0.00f, 1.00f };
 VECTOR camera_position = { 0.00f, 0.00f, 100.00f, 1.00f };
 VECTOR camera_rotation = { 0.00f, 0.00f,   0.00f, 1.00f };
 
-void init_gs(framebuffer_t *frame, zbuffer_t *z){
-	// Define a 32-bit 640x512 framebuffer.
-	frame->width = 640;
-	frame->height = 480;
-	frame->mask = 0;
-	frame->psm = GS_PSM_32;
-	frame->address = graph_vram_allocate(frame->width,frame->height, frame->psm, GRAPH_ALIGN_PAGE);
-
-	// Enable the zbuffer.
-	z->enable = DRAW_ENABLE;
-	z->mask = 0;
-	z->method = ZTEST_METHOD_GREATER_EQUAL;
-	z->zsm = GS_ZBUF_32;
-	z->address = graph_vram_allocate(frame->width,frame->height,z->zsm, GRAPH_ALIGN_PAGE);
-
-	// Initialize the screen and tie the first framebuffer to the read circuits.
-	graph_initialize(frame->address,frame->width,frame->height,frame->psm,0,0);
-}
-
-void init_drawing_environment(framebuffer_t *frame, zbuffer_t *z){
+void init_drawing_environment(FrameBuffer& frame, DepthBuffer& depth){
 	packet_t *packet = packet_init(16,PACKET_NORMAL);
 
 	// This is our generic qword pointer.
 	qword_t *q = packet->data;
 
 	// This will setup a default drawing environment.
-	q = draw_setup_environment(q,0,frame,z);
+	q = draw_setup_environment(q, 0, frame.Get(), depth.Get());
 
 	// Now reset the primitive origin to 2048-width/2,2048-height/2.
-	q = draw_primitive_xyoffset(q,0,(2048-320),(2048-256));
+	q = draw_primitive_xyoffset(q,0,(2048-320),(2048-240));
 
 	// Finish setting up the environment.
 	q = draw_finish(q);
@@ -189,7 +174,7 @@ void init_drawing_environment(framebuffer_t *frame, zbuffer_t *z){
 	packet_free(packet);
 }
 
-int render(framebuffer_t *frame, zbuffer_t *z){
+int render(FrameBuffer& frame, DepthBuffer& depth){
 	int context = 0;
 
 	// Matrices to setup the 3D environment and camera
@@ -279,9 +264,9 @@ int render(framebuffer_t *frame, zbuffer_t *z){
 		q++;
 
 		// Clear framebuffer but don't update zbuffer.
-		q = draw_disable_tests(q,0,z);
-		q = draw_clear(q,0,2048.0f-320.0f,2048.0f-256.0f,frame->width,frame->height,0x00,0x00,0x00);
-		q = draw_enable_tests(q,0,z);
+		q = draw_disable_tests(q,0,depth.Get());
+		q = draw_clear(q,0,2048.0f-320.0f,2048.0f-240.0f,640,480,0x00,0x00,0x00);
+		q = draw_enable_tests(q,0,depth.Get());
 
 		// Draw the triangles using triangle primitive type.
 		q = draw_prim_start(q,0,&prim, &color);
@@ -321,16 +306,15 @@ int render(framebuffer_t *frame, zbuffer_t *z){
 }
 
 int main(){
-	framebuffer_t frame;
-	zbuffer_t zBuffer;
-
 	dma_channel_initialize(DMA_CHANNEL_GIF, nullptr, 0);
 	dma_channel_fast_waits(DMA_CHANNEL_GIF);
 
-	init_gs(&frame, &zBuffer);
-	init_drawing_environment(&frame, &zBuffer);
+	FrameBuffer frame = FrameBuffer(640, 480);
+	DepthBuffer depth = DepthBuffer(640, 480);
 
-	render(&frame, &zBuffer);
+	init_drawing_environment(frame, depth);
+
+	render(frame, depth);
 
 	return 0;
 }
