@@ -1,6 +1,7 @@
 #include <dma.h>
 #include <dma_tags.h>
 
+#include "Debug.hpp"
 #include "GameObject.hpp"
 #include "Utils.hpp"
 #include "Graphics/Camera.hpp"
@@ -10,6 +11,7 @@ static constexpr int gScreenWidth = 640;
 static constexpr int gScreenHeight = 480;
 
 int main(){
+	LOG_INFO("Launching PS2Engine...");
 	dma_channel_initialize(DMA_CHANNEL_GIF, nullptr, 0);
 	dma_channel_fast_waits(DMA_CHANNEL_GIF);
 
