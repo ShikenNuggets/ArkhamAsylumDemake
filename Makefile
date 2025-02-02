@@ -8,7 +8,7 @@ EE_BIN=$(BUILD_DIR)/test.elf
 EE_OBJS=$(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.obj, $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/**/*.cpp))
 
 EE_INCS += -I$(SRC_DIR) 
-EE_LIBS += -ldma -lgraph -ldraw -lkernel -ldebug -lpacket -lmath3d
+EE_LIBS += -lstdc++ -ldma -lgraph -ldraw -lkernel -ldebug -lpacket -lmath3d
 
 EE_CXXFLAGS += -Wall --std=c++17
 EE_LDFLAGS = -L$(PSDSDK)/ee/common/lib -L$(PS2SDK)/ee/lib

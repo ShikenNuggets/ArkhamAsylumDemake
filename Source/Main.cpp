@@ -9,8 +9,6 @@
 static constexpr int gScreenWidth = 640;
 static constexpr int gScreenHeight = 480;
 
-void* __gxx_personality_v0; // Apparently this needs to be defined somewhere due to exception handling being disabled
-
 int main(){
 	dma_channel_initialize(DMA_CHANNEL_GIF, nullptr, 0);
 	dma_channel_fast_waits(DMA_CHANNEL_GIF);
