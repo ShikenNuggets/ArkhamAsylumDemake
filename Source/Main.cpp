@@ -50,6 +50,11 @@ int main(){
 		gameObjects[3]->Rotate(-0.009f, 0.011f, 0.0f);
 		renderer.Render(camera, gameObjects);
 	}
+
+	for(auto* go : gameObjects){
+		delete go;
+	}
+	gameObjects.clear();
 	
 	return 0;
 }
