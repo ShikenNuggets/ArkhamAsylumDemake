@@ -69,7 +69,7 @@ void Renderer::Render(Camera& camera, const std::vector<GameObject*> gameObjects
 
 	// Clear framebuffer but don't update zbuffer.
 	q = draw_disable_tests(q, 0, depthBuffer.Get());
-	q = draw_clear(q, 0, Renderer::gOffsetX - (width / 2.0f), Renderer::gOffsetY - (height / 2.0f), width, height, 0x0, 0x0, 0x0); //TODO - Configurable clear color
+	q = draw_clear(q, 0, Renderer::gOffsetX - (width / 2.0f), Renderer::gOffsetY - (height / 2.0f), width, height, clearR, clearG, clearB);
 	q = draw_enable_tests(q, 0, depthBuffer.Get());
 
 	for(auto* go : gameObjects){

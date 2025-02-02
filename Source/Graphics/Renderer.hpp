@@ -1,6 +1,7 @@
 #ifndef PS2E_RENDERER_HPP
 #define PS2E_RENDERER_HPP
 
+#include <cstdint>
 #include <vector>
 
 #include <packet.h>
@@ -23,6 +24,12 @@ public:
 	inline DepthBuffer& GetDepthBuffer(){ return depthBuffer; }
 	inline const DepthBuffer& GetDepthBuffer() const{ return depthBuffer; }
 
+	inline void SetClearColor(uint8_t r, uint8_t g, uint8_t b){
+		clearR = r;
+		clearG = g;
+		clearB = b;
+	}
+
 	static constexpr inline int gOffsetX = 2048;
 	static constexpr inline int gOffsetY = 2048;
 
@@ -37,6 +44,10 @@ private:
 	int packetCtx;
 
 	MATRIX viewScreenMatrix;
+
+	uint8_t clearR;
+	uint8_t clearG;
+	uint8_t clearB;
 };
 
 #endif //!PS2E_RENDERER_HPP

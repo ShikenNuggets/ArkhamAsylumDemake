@@ -18,6 +18,7 @@ int main(){
 	dma_channel_fast_waits(DMA_CHANNEL_GIF);
 
 	Renderer renderer = Renderer(640, 480);
+	renderer.SetClearColor(0, 0, 0);
 
 	Camera camera;
 
