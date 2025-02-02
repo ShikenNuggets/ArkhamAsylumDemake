@@ -1,7 +1,6 @@
 #include "Renderer.hpp"
 
 #include <cstring>
-#include <stdlib.h>
 
 #include <dma.h>
 #include <dma_tags.h>
