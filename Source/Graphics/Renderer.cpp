@@ -32,8 +32,8 @@ Renderer::Renderer(unsigned int width_, unsigned int height_) : frameBuffer(widt
 	packet_free(packet);
 
 	// Two packets to allow double-buffered DMA sends
-	packets[0] = packet_init(100, PACKET_NORMAL);
-	packets[1] = packet_init(100, PACKET_NORMAL);
+	packets[0] = packet_init(1024, PACKET_NORMAL);
+	packets[1] = packet_init(1024, PACKET_NORMAL);
 
 	create_view_screen(viewScreenMatrix, graph_aspect_ratio(), -3.00f, 3.00f, -3.00f, 3.00f, 1.00f, 2000.00f);
 }
