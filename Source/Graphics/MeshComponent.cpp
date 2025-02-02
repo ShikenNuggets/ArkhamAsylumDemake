@@ -5,15 +5,16 @@
 
 #include <draw.h>
 
+#include "Debug.hpp"
 #include "Renderer.hpp"
 #include "mesh_data.h"
 
 MeshComponent::MeshComponent(){
-	std::printf("Allocating buffers...\n");
+	LOG_INFO("Allocating mesh buffers...");
 	transformedVerts = static_cast<VECTOR*>(aligned_alloc(128, sizeof(VECTOR) * vertex_count));
 	vertexBuffer  = static_cast<xyz_t*>(aligned_alloc(128, sizeof(vertex_t) * vertex_count));
 	colorBuffer = static_cast<color_t*>(aligned_alloc(128, sizeof(color_t)  * vertex_count));
-	std::printf("Buffers allocated\n");
+	LOG_INFO("Mesh buffers allocated");
 
 	prim.type = PRIM_TRIANGLE;
 	prim.shading = PRIM_SHADE_GOURAUD;
