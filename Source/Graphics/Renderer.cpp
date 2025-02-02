@@ -44,28 +44,22 @@ Renderer::~Renderer(){
 	packet_free(packets[1]);
 }
 
-void Renderer::Render(Camera& camera, GameObject& go1, GameObject& go2){
+void Renderer::Render(Camera& camera, const std::vector<GameObject*> gameObjects){
 	qword_t* q = nullptr;
 
 	packet_t* current = packets[packetCtx];
 
 	// Create the local_world matrix.
 	MATRIX local_world;
-	go1.GetLocalWorld(local_world);
-
-	// Create the world_view matrix.
+	MATRIX local_screen;
 	MATRIX world_view;
 	camera.GetWorldView(world_view);
 
-	// Create the local_screen matrix.
-	MATRIX local_screen;
-	create_local_screen(local_screen, local_world, world_view, viewScreenMatrix);
-		
-	go1.GetMesh().Update(local_screen);
-
-	go2.GetLocalWorld(local_world);
-	create_local_screen(local_screen, local_world, world_view, viewScreenMatrix);
-	go2.GetMesh().Update(local_screen);
+	for(auto* go : gameObjects){
+		go->GetLocalWorld(local_world);
+		create_local_screen(local_screen, local_world, world_view, viewScreenMatrix);
+		go->GetMesh().Update(local_screen);
+	}
 
 	// Grab our dmatag pointer for the dma chain.
 	qword_t* dmatag = current->data;
@@ -79,8 +73,9 @@ void Renderer::Render(Camera& camera, GameObject& go1, GameObject& go2){
 	q = draw_clear(q, 0, Renderer::gOffsetX - (width / 2.0f), Renderer::gOffsetY - (height / 2.0f), width, height, 0x0, 0x0, 0x0); //TODO - Configurable clear color
 	q = draw_enable_tests(q, 0, depthBuffer.Get());
 
-	q = go1.GetMesh().Render(q);
-	q = go2.GetMesh().Render(q);
+	for(auto* go : gameObjects){
+		q = go->GetMesh().Render(q);
+	}
 
 	// Setup a finish event.
 	q = draw_finish(q);

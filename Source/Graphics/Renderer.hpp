@@ -1,6 +1,8 @@
 #ifndef PS2E_RENDERER_HPP
 #define PS2E_RENDERER_HPP
 
+#include <vector>
+
 #include <packet.h>
 
 #include "Camera.hpp"
@@ -13,7 +15,7 @@ public:
 	Renderer(unsigned int width_, unsigned int height_);
 	~Renderer();
 
-	void Render(Camera& camera, GameObject& go1, GameObject& go2);
+	void Render(Camera& camera, const std::vector<GameObject*> gameObjects);
 
 	inline FrameBuffer& GetFrameBuffer(){ return frameBuffer; }
 	inline const FrameBuffer& GetFrameBuffer() const{ return frameBuffer; }

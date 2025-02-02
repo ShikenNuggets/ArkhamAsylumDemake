@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <dma.h>
 #include <dma_tags.h>
 
@@ -17,19 +19,25 @@ int main(){
 
 	Renderer renderer = Renderer(640, 480);
 
-	GameObject object;
-	GameObject object2;
 	Camera camera;
 
-	object.Move(-16.0f, 0.0f, 0.0f);
-	object2.Move(16.0f, 0.0f, 0.0f);
+	std::vector<GameObject*> gameObjects;
+	gameObjects.reserve(2);
+
+	GameObject* go = new GameObject();
+	go->Move(-16.0f, 0.0f, 0.0f);
+	gameObjects.push_back(go);
+
+	go = new GameObject();
+	go->Move(16.0f, 0.0f, 0.0f);
+	gameObjects.push_back(go);
 
 	dma_wait_fast();
 
 	while(true){
-		object.Rotate(0.008f, 0.012f, 0.0f);
-		object2.Rotate(-0.007f, 0.013f, 0.0f);
-		renderer.Render(camera, object, object2);
+		gameObjects[0]->Rotate(0.008f, 0.012f, 0.0f);
+		gameObjects[1]->Rotate(-0.007f, 0.013f, 0.0f);
+		renderer.Render(camera, gameObjects);
 	}
 	
 	return 0;
