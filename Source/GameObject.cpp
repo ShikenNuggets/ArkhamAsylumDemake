@@ -1,8 +1,12 @@
 #include "GameObject.hpp"
 
-GameObject::GameObject(float xPos, float yPos, float zPos, float xRot, float yRot, float zRot) : position{ xPos, yPos, zPos, 0.0f }, rotation{ xRot, yRot, zRot, 0.0f }, mesh(){}
+GameObject::GameObject(float xPos, float yPos, float zPos, float xRot, float yRot, float zRot) : position{ xPos, yPos, zPos, 0.0f }, rotation{ xRot, yRot, zRot, 0.0f }, mesh(), logic(this){}
 
 GameObject::~GameObject() = default;
+
+void GameObject::Update(){
+	logic.Update();
+}
 
 void GameObject::Move(float x, float y, float z){
 	position[0] += x;

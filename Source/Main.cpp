@@ -31,10 +31,7 @@ int main(){
 	dma_wait_fast();
 
 	while(true){
-		currentScene.GetGameObjects()[0]->Rotate(0.008f, 0.012f, 0.0f);
-		currentScene.GetGameObjects()[1]->Rotate(-0.007f, 0.013f, 0.0f);
-		currentScene.GetGameObjects()[2]->Rotate(-0.006f, 0.014f, 0.0f);
-		currentScene.GetGameObjects()[3]->Rotate(-0.009f, 0.011f, 0.0f);
+		currentScene.Update();
 		renderer.Render(currentScene.GetCamera(), currentScene.GetGameObjects());
 	}
 	

@@ -10,6 +10,17 @@ Scene::~Scene(){
 	}
 }
 
+void Scene::Update(){
+	for(auto* go : gameObjects){
+		if(go == nullptr){
+			LOG_WARNING("Nul GameObject found in scene!");
+			continue;
+		}
+
+		go->Update();
+	}
+}
+
 GameObject* Scene::AddObject(float xPos, float yPos, float zPos, float xRot, float yRot, float zRot){
 	GameObject* go = new GameObject(xPos, yPos, zPos, xRot, yRot, zRot);
 	gameObjects.push_back(go);
