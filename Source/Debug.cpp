@@ -22,7 +22,7 @@ void Debug::Log(const char* message, Debug::LogType type, const char* fileName, 
 			break;
 	}
 
-	std::printf("%s: %s (%s:%d)\n", typePrefix, message, FileSystem::GetFileNameFromPath(fileName).c_str(), lineNumber);
+	std::printf("[PS2E] %s: %s   (%s:%d)\n", typePrefix, message, FileSystem::GetFileNameFromPath(fileName).c_str(), lineNumber);
 
 	if(type == Debug::FatalError){
 		std::exit(-1);
