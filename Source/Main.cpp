@@ -6,6 +6,7 @@
 #include "Debug.hpp"
 #include "GameObject.hpp"
 #include "Utils.hpp"
+#include "Game/Scene.hpp"
 #include "Graphics/Camera.hpp"
 #include "Graphics/Renderer.hpp"
 
@@ -20,41 +21,29 @@ int main(){
 	Renderer renderer = Renderer(640, 480);
 	renderer.SetClearColor(0, 0, 0);
 
-	Camera camera;
+	Scene currentScene;
 
-	std::vector<GameObject*> gameObjects;
-	gameObjects.reserve(2);
-
-	GameObject* go = new GameObject();
+	GameObject* go = currentScene.AddObject();
 	go->Move(-16.0f, 16.0f, 0.0f);
-	gameObjects.push_back(go);
 
-	go = new GameObject();
+	go = currentScene.AddObject();
 	go->Move(16.0f, 16.0f, 0.0f);
-	gameObjects.push_back(go);
 
-	go = new GameObject();
+	go = currentScene.AddObject();
 	go->Move(-16.0f, -16.0f, 0.0f);
-	gameObjects.push_back(go);
 
-	go = new GameObject();
+	go = currentScene.AddObject();
 	go->Move(16.0f, -16.0f, 0.0f);
-	gameObjects.push_back(go);
 
 	dma_wait_fast();
 
 	while(true){
-		gameObjects[0]->Rotate(0.008f, 0.012f, 0.0f);
-		gameObjects[1]->Rotate(-0.007f, 0.013f, 0.0f);
-		gameObjects[2]->Rotate(-0.006f, 0.014f, 0.0f);
-		gameObjects[3]->Rotate(-0.009f, 0.011f, 0.0f);
-		renderer.Render(camera, gameObjects);
+		currentScene.GetGameObjects()[0]->Rotate(0.008f, 0.012f, 0.0f);
+		currentScene.GetGameObjects()[1]->Rotate(-0.007f, 0.013f, 0.0f);
+		currentScene.GetGameObjects()[2]->Rotate(-0.006f, 0.014f, 0.0f);
+		currentScene.GetGameObjects()[3]->Rotate(-0.009f, 0.011f, 0.0f);
+		renderer.Render(currentScene.GetCamera(), currentScene.GetGameObjects());
 	}
-
-	for(auto* go : gameObjects){
-		delete go;
-	}
-	gameObjects.clear();
 	
 	return 0;
 }
