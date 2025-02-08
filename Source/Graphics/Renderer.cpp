@@ -43,7 +43,7 @@ Renderer::~Renderer(){
 	packet_free(packets[1]);
 }
 
-void Renderer::Render(Camera& camera, const std::vector<GameObject*> gameObjects){
+void Renderer::Render(Camera& camera, const std::vector<GameObject*>& gameObjects){
 	qword_t* q = nullptr;
 
 	packet_t* current = packets[packetCtx];

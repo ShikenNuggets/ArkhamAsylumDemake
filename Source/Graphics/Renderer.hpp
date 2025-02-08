@@ -16,7 +16,7 @@ public:
 	Renderer(unsigned int width_, unsigned int height_);
 	~Renderer();
 
-	void Render(Camera& camera, const std::vector<GameObject*> gameObjects);
+	void Render(Camera& camera, const std::vector<GameObject*>& gameObjects);
 
 	inline FrameBuffer& GetFrameBuffer(){ return frameBuffer; }
 	inline const FrameBuffer& GetFrameBuffer() const{ return frameBuffer; }
