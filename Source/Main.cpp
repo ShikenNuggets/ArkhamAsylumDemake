@@ -23,17 +23,10 @@ int main(){
 
 	Scene currentScene;
 
-	GameObject* go = currentScene.AddObject();
-	go->Move(-16.0f, 16.0f, 0.0f);
-
-	go = currentScene.AddObject();
-	go->Move(16.0f, 16.0f, 0.0f);
-
-	go = currentScene.AddObject();
-	go->Move(-16.0f, -16.0f, 0.0f);
-
-	go = currentScene.AddObject();
-	go->Move(16.0f, -16.0f, 0.0f);
+	currentScene.AddObject(-16.0f, 16.0f, 0.0f);
+	currentScene.AddObject(16.0f, 16.0f, 0.0f);
+	currentScene.AddObject(-16.0f, -16.0f, 0.0f);
+	currentScene.AddObject(16.0f, -16.0f, 0.0f);
 
 	dma_wait_fast();
 

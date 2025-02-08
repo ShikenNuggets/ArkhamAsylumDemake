@@ -10,8 +10,8 @@ Scene::~Scene(){
 	}
 }
 
-GameObject* Scene::AddObject(){
-	GameObject* go = new GameObject();
+GameObject* Scene::AddObject(float xPos, float yPos, float zPos, float xRot, float yRot, float zRot){
+	GameObject* go = new GameObject(xPos, yPos, zPos, xRot, yRot, zRot);
 	gameObjects.push_back(go);
 	return go;
 }
