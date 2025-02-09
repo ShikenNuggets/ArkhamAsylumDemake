@@ -68,4 +68,12 @@ namespace Debug{
 	#define FATAL_ERROR(message, ...) Debug::Log(message, Debug::FatalError, __FILE__, __LINE__, ##__VA_ARGS__)
 #endif //!FATAL_ERROR
 
+#ifndef ASSERT
+	#define ASSERT(condition, message, ...) { if(!(condition)){ LOG_ERROR(message, ##__VA_ARGS__); } }
+#endif //!ASSERT
+
+#ifndef BASIC_ASSERT
+	#define BASIC_ASSERT(condition){ if(!(condition)){ LOG_ERROR("Assert Failed: " #condition); } }
+#endif //!BASIC_ASSERT
+
 #endif //!PS2E_DEBUG_HPP
