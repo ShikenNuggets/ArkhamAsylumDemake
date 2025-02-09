@@ -159,6 +159,10 @@ bool Gamepad::IsValidButton(uint32_t button){
 		case PAD_CIRCLE:	[[fallthrough]];
 		case PAD_SQUARE:	[[fallthrough]];
 		case PAD_CROSS:		[[fallthrough]];
+		case PAD_UP:		[[fallthrough]];
+		case PAD_DOWN:		[[fallthrough]];
+		case PAD_LEFT:		[[fallthrough]];
+		case PAD_RIGHT:		[[fallthrough]];
 		case PAD_START:		[[fallthrough]];
 		case PAD_SELECT:
 			return true;
