@@ -11,6 +11,8 @@ Scene::~Scene(){
 }
 
 void Scene::Update(){
+	camera.Update();
+
 	for(auto* go : gameObjects){
 		if(go == nullptr){
 			LOG_WARNING("Nul GameObject found in scene!");

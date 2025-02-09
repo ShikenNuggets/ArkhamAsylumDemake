@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+#include <libpad.h>
+
 namespace Input{
 	void Init();
 	void Update();
