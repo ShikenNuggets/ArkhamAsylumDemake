@@ -17,11 +17,17 @@ std::vector<int> gSlotMax;
 std::vector<Port> ports;
 
 void Input::Init(){
-	// Load Modules
-	SifLoadModule("rom0:SIO2MAN", 0, nullptr); // TODO - Error handling
-	SifLoadModule("rom0:PADMAN", 0, nullptr); // TODO - Error handling
+	if(SifLoadModule("rom0:SIO2MAN", 0, nullptr) < 0){
+		FATAL_ERROR("Failed to load module \"rom0:SIO2MAN\" required for gamepad input!");
+	}
 
-	padInit(0); // TODO - Error handling
+	if(SifLoadModule("rom0:PADMAN", 0, nullptr) < 0){
+		FATAL_ERROR("Failed to load module \"rom0:PADMAN\" required for gamepad input!");
+	}
+
+	if(!padInit(0)){
+		FATAL_ERROR("Failed to initialize gamepad library!");
+	}
 
 	const int maxPorts = padGetPortMax();
 	ports.reserve(maxPorts);

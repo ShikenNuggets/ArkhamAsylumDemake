@@ -5,7 +5,7 @@
 #include "Debug.hpp"
 
 Port::Port(int port_) : portNum(port_){
-	int maxSlots = padGetSlotMax(portNum);
+	const int maxSlots = padGetSlotMax(portNum);
 	if(maxSlots <= 0){
 		LOG_ERROR("Port %d has an invalid number of slots (%d)!", portNum, maxSlots);
 	}
@@ -33,8 +33,7 @@ bool Port::ButtonDown(uint32_t button, int slot_) const{
 		return false;
 	}
 
-	// TODO - signed/unsigned mismatch
-	if(slot_ >= slots.size()){
+	if(static_cast<size_t>(slot_) >= slots.size()){
 		LOG_ERROR("ButtonDown called with an invalid slot (%d)!", slot_);
 		return false;
 	}
@@ -53,8 +52,7 @@ bool Port::ButtonUp(uint32_t button, int slot_) const{
 		return false;
 	}
 
-	// TODO - signed/unsigned mismatch
-	if(slot_ >= slots.size()){
+	if(static_cast<size_t>(slot_) >= slots.size()){
 		LOG_ERROR("ButtonUp called with an invalid slot (%d)!", slot_);
 		return false;
 	}
@@ -73,8 +71,7 @@ bool Port::ButtonHeld(uint32_t button, int slot_) const{
 		return false;
 	}
 
-	// TODO - signed/unsigned mismatch
-	if(slot_ >= slots.size()){
+	if(static_cast<size_t>(slot_) >= slots.size()){
 		LOG_ERROR("ButtonHeld called with an invalid slot (%d)!", slot_);
 		return false;
 	}

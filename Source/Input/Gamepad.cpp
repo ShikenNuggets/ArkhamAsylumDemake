@@ -8,14 +8,22 @@
 
 #include "Debug.hpp"
 
-// TODO - What should the destructor for this class do exactly?
-Gamepad::Gamepad(int port_, int slot_) : isSetup(false), padBuffer(), actAlign(), port(port_), slot(slot_), prevState(0), curState(0){
-	padPortOpen(port, slot, padBuffer);
+Gamepad::Gamepad(int port_, int slot_) : padBuffer(), actAlign(), port(port_), slot(slot_), prevState(0), curState(0), isSetup(false){
+	if(!padPortOpen(port, slot, padBuffer)){
+		FATAL_ERROR("Could not open Gamepad port [%d, %d]", port, slot);
+	}
+
 	SetupOnConnected();
 }
 
+Gamepad::~Gamepad(){
+	if(!padPortClose(port, slot)){
+		LOG_ERROR("An error occured while closing Gamepad port [%d, %d]", port, slot);
+	}
+}
+
 void Gamepad::Update(){
-	if(!WaitUntilReady()){
+	if(!TryWaitUntilReady()){
 		return;
 	}
 	
@@ -32,35 +40,26 @@ void Gamepad::Update(){
 }
 
 bool Gamepad::ButtonDown(uint32_t button) const{
+	ASSERT(IsValidButton(button), "Assert Failed: [%d] is not a valid button!", button);
 	return curState & button && !(prevState & button);
 }
 
 bool Gamepad::ButtonUp(uint32_t button) const{
+	ASSERT(IsValidButton(button), "Assert Failed: [%d] is not a valid button!", button);
 	return !(curState & button) && prevState & button;
 }
 
 bool Gamepad::ButtonHeld(uint32_t button) const{
+	ASSERT(IsValidButton(button), "Assert Failed: [%d] is not a valid button!", button);
 	return curState & button;
 }
 
 void Gamepad::SetupOnConnected(){
-	if(!WaitUntilReady() || isSetup){
+	if(!TryWaitUntilReady() || isSetup){
 		return;
 	}
 
 	int modes = padInfoMode(port, slot, PAD_MODETABLE, -1);
-	LOG_VERBOSE("Gamepad [%d,%d] has %d modes", port, slot, modes);
-
-    if(modes > 0){
-		printf("( ");
-		for(int i = 0; i < modes; i++) {
-			printf("%d ", padInfoMode(port, slot, PAD_MODETABLE, i));
-		}
-		printf(")");
-	}
-
-	LOG_VERBOSE("Gamepad [%d,%d] currently using mode %d", port, slot, padInfoMode(port, slot, PAD_MODECURID, 0));
-
 	if(modes == 0){
 		LOG_VERBOSE("Gamepad has no actuator engines");
 		isSetup = true;
@@ -90,22 +89,19 @@ void Gamepad::SetupOnConnected(){
 		return;
 	}
 
-	printf("Enabling dual shock functions\n");
 	LOG_VERBOSE("Enabling Dualshock Functions on Gamepad [%d,%d]", port, slot);
 
 	// When using MMODE_LOCK, user can't change mode with Select button
-	padSetMainMode(port, slot, PAD_MMODE_DUALSHOCK, PAD_MMODE_LOCK);
+	if(!padSetMainMode(port, slot, PAD_MMODE_DUALSHOCK, PAD_MMODE_LOCK)){
+		LOG_ERROR("Could not set pad to locked Dualshock mode!");
+		return;
+	}
 
-	WaitUntilReady();
-	LOG_VERBOSE("infoPressMode: %d", padInfoPressMode(port, slot));
+	if(!TryWaitUntilReady()){
+		return;
+	}
 
-	WaitUntilReady();
-	LOG_VERBOSE("enterPressMode: %d", padEnterPressMode(port, slot));
-
-	WaitUntilReady();
 	unsigned char actuators = padInfoAct(port, slot, -1, 0);
-	LOG_VERBOSE("# of actuators: %d", actuators);
-
 	if(actuators != 0){
 		actAlign[0] = 0;   // Enable small engine
 		actAlign[1] = 1;   // Enable big engine
@@ -114,16 +110,19 @@ void Gamepad::SetupOnConnected(){
 		actAlign[4] = 0xff;
 		actAlign[5] = 0xff;
 
-		WaitUntilReady();
-		LOG_VERBOSE("padSetActAlign: %d", padSetActAlign(0, 0, actAlign));
-    }else{
-		LOG_VERBOSE("Did not find any actuators");
-	}
+		if(!TryWaitUntilReady()){
+			return;
+		}
+
+		if(!padSetActAlign(0, 0, actAlign)){
+			LOG_ERROR("Could not initialize gamepad actuators!");
+		}
+    }
 
 	isSetup = true;
 }
 
-bool Gamepad::WaitUntilReady(int numRetries){
+bool Gamepad::TryWaitUntilReady(int numRetries){
 	int lastState = -1;
 	for(int i = 0; i < numRetries; i++){
 		int state = padGetState(port, slot);
@@ -131,13 +130,8 @@ bool Gamepad::WaitUntilReady(int numRetries){
 			return true;
 		}
 
-		if(state == PAD_STATE_DISCONN){
+		if(state == PAD_STATE_DISCONN || state == PAD_STATE_ERROR){
 			isSetup = false;
-			return false;
-		}
-
-		if(state == PAD_STATE_ERROR){
-			LOG_ERROR("Gamepad [%d, %d] is in an error state!", port, slot);
 			return false;
 		}
 
@@ -151,4 +145,24 @@ bool Gamepad::WaitUntilReady(int numRetries){
 
 	LOG_VERBOSE("Gamepad not in a usable state, will try again on next Input update");
 	return false;
+}
+
+bool Gamepad::IsValidButton(uint32_t button){
+	switch(button){
+		case PAD_L1:		[[fallthrough]];
+		case PAD_L2:		[[fallthrough]];
+		case PAD_L3:		[[fallthrough]];
+		case PAD_R1:		[[fallthrough]];
+		case PAD_R2:		[[fallthrough]];
+		case PAD_R3:		[[fallthrough]];
+		case PAD_TRIANGLE:	[[fallthrough]];
+		case PAD_CIRCLE:	[[fallthrough]];
+		case PAD_SQUARE:	[[fallthrough]];
+		case PAD_CROSS:		[[fallthrough]];
+		case PAD_START:		[[fallthrough]];
+		case PAD_SELECT:
+			return true;
+		default:
+			return false;
+	}
 }

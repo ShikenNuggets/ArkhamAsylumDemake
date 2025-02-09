@@ -12,7 +12,7 @@ public:
 
 	void Update();
 
-	// slot < 0 will return true if ANY controller has the button down/up/held
+	// slot < 0 will return true if ANY gamepad has the button down/up/held
 	bool ButtonDown(uint32_t button, int slot_ = -1) const; 
 	bool ButtonUp(uint32_t button, int slot_ = -1) const;
 	bool ButtonHeld(uint32_t button, int slot_ = -1) const;
