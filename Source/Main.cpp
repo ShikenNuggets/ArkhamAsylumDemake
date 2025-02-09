@@ -9,6 +9,7 @@
 #include "Game/Scene.hpp"
 #include "Graphics/Camera.hpp"
 #include "Graphics/Renderer.hpp"
+#include "Input/Input.hpp"
 
 static constexpr int gScreenWidth = 640;
 static constexpr int gScreenHeight = 480;
@@ -30,7 +31,11 @@ int main(){
 
 	dma_wait_fast();
 
+	Input::Init();
+
 	while(true){
+		Input::Update();
+
 		currentScene.Update();
 		renderer.Render(currentScene.GetCamera(), currentScene.GetGameObjects());
 	}
