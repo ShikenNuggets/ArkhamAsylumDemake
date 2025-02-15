@@ -10,7 +10,7 @@ Yet another 3D game engine. But this one runs on the PS2!
 | Model Loading | |
 | Textures | |
 | Character Animation | |
-| Controller Input | |
+| Controller Input | ✓ |
 | Text Rendering | |
 | GUI | |
 | Physics | |
