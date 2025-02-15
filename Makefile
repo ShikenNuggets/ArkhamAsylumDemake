@@ -13,7 +13,7 @@ EE_LIBS += -lstdc++ -ldma -lgraph -ldraw -lkernel -ldebug -lpacket -lmath3d -lpa
 EE_CXXFLAGS += -Wall --std=c++17
 EE_LDFLAGS = -L$(PSDSDK)/ee/common/lib -L$(PS2SDK)/ee/lib
 
-ISO_TGT=Build/test.iso
+ISO_TGT=$(BUILD_DIR)/test.iso
 
 include $(PS2SDK)/samples/Makefile.eeglobal
 include $(PS2SDK)/samples/Makefile.pref
@@ -37,3 +37,4 @@ clean:
 .PHONY: iso
 iso:
 	mkisofs -l -o $(ISO_TGT) $(EE_BIN) SYSTEM.CNF
+	cp $(ISO_TGT) /mnt/e/Games/PS2/DVD/BatmanArkhamAsylum.iso
