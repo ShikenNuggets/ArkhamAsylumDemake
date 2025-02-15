@@ -36,22 +36,56 @@ void Gamepad::Update(){
 	if(result != 0){
 		prevState = curState;
 		curState = 0xffff ^ buttons.btns;
+
+		axisState[JoyAxis::LeftX] = buttons.ljoy_h;
+		axisState[JoyAxis::LeftY] = buttons.ljoy_v;
+		axisState[JoyAxis::RightX] = buttons.rjoy_h;
+		axisState[JoyAxis::RightY] = buttons.rjoy_v;
 	}
 }
 
 bool Gamepad::ButtonDown(uint32_t button) const{
 	ASSERT(IsValidButton(button), "Assert Failed: [%d] is not a valid button!", button);
-	return curState & button && !(prevState & button);
+	return isSetup && (curState & button) && !(prevState & button);
 }
 
 bool Gamepad::ButtonUp(uint32_t button) const{
 	ASSERT(IsValidButton(button), "Assert Failed: [%d] is not a valid button!", button);
-	return !(curState & button) && prevState & button;
+	return isSetup && !(curState & button) && (prevState & button);
 }
 
 bool Gamepad::ButtonHeld(uint32_t button) const{
 	ASSERT(IsValidButton(button), "Assert Failed: [%d] is not a valid button!", button);
-	return curState & button;
+	return isSetup && (curState & button);
+}
+
+float Gamepad::GetAxis(JoyAxis axis) const{
+	BASIC_ASSERT(axis < JoyAxis::JoyAxis_MAX);
+	if(!isSetup || axis >= JoyAxis::JoyAxis_MAX){
+		return 0.0f;
+	}
+
+	const float value = axisState[axis];
+	constexpr float maxValue = std::numeric_limits<unsigned char>::max();
+	float result = ((value / maxValue) * 2.0f) - 1.0f;
+
+	if(axis == JoyAxis::LeftY || axis == JoyAxis::RightY){
+		result = -result;
+	}
+
+	// TODO - Smooth out remaining range instead of just cutting off at the deadzone
+	// TODO - Configurable deadzone
+	if(result > -0.25f && result < 0.25f){
+		return 0.0f;
+	}
+
+	if(result < -1.0f){
+		return -1.0f;
+	}else if(result > 1.0f){
+		return 1.0f;
+	}
+
+	return result;
 }
 
 void Gamepad::SetupOnConnected(){

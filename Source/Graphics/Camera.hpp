@@ -15,19 +15,10 @@ public:
 	inline void Update(){
 		constexpr float moveSpeed = 50.0f;
 		constexpr float frameTime = 1.0f / 60.0f;
+
+		position[0] += Input::GetAxis(JoyAxis::LeftX) * frameTime * moveSpeed;
+		position[1] += Input::GetAxis(JoyAxis::LeftY) * frameTime * moveSpeed;
 		
-		if(Input::ButtonHeld(PAD_UP)){
-			position[1] += frameTime * moveSpeed;
-		}else if(Input::ButtonHeld(PAD_DOWN)){
-			position[1] -= frameTime * moveSpeed;
-		}
-
-		if(Input::ButtonHeld(PAD_LEFT)){
-			position[0] -= frameTime * moveSpeed;
-		}else if(Input::ButtonHeld(PAD_RIGHT)){
-			position[0] += frameTime * moveSpeed;
-		}
-
 		if(Input::ButtonHeld(PAD_L1)){
 			position[2] += frameTime * moveSpeed;
 		}else if(Input::ButtonHeld(PAD_R1)){

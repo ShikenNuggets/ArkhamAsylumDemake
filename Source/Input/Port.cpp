@@ -78,3 +78,23 @@ bool Port::ButtonHeld(uint32_t button, int slot_) const{
 
 	return slots[slot_].ButtonHeld(button);
 }
+
+float Port::GetAxis(JoyAxis axis, int slot_) const{
+	if(slot_ < 0){
+		for(const auto& gamepad : slots){
+			const float value = gamepad.GetAxis(axis);
+			if(value > 0.01f || value < -0.01f){
+				return value;
+			}
+		}
+
+		return 0.0f;
+	}
+
+	if(static_cast<size_t>(slot_) >= slots.size()){
+		LOG_ERROR("ButtonHeld called with an invalid slot (%d)!", slot_);
+		return 0.0f;
+	}
+
+	return slots[slot_].GetAxis(axis);
+}

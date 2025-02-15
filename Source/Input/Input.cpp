@@ -138,3 +138,29 @@ bool Input::ButtonHeld(uint32_t button, int player){
 
 	return ports[port].ButtonHeld(button, slot);
 }
+
+float Input::GetAxis(JoyAxis axis, int player){
+	if(player < 0){
+		for(const auto& port : ports){
+			const float value = port.GetAxis(axis);
+			if(value > 0.01f || value < -0.01f){
+				return value;
+			}
+		}
+
+		return 0.0f;
+	}
+
+	BASIC_ASSERT(player <= 8);
+	if(player > 8){
+		return 0.0f;
+	}
+
+	int port = 0;
+	int slot = 0;
+	if(!GetPortAndSlotForPlayerIdx(port, slot, player)){
+		return 0.0f;
+	}
+
+	return ports[port].GetAxis(axis, slot);
+}
