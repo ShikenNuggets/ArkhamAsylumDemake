@@ -59,7 +59,7 @@ bool Gamepad::ButtonHeld(uint32_t button) const{
 	return isSetup && (curState & button);
 }
 
-float Gamepad::GetAxis(JoyAxis axis) const{
+float Gamepad::GetAxisRaw(JoyAxis axis) const{
 	BASIC_ASSERT(axis < JoyAxis::JoyAxis_MAX);
 	if(!isSetup || axis >= JoyAxis::JoyAxis_MAX){
 		return 0.0f;
@@ -68,10 +68,16 @@ float Gamepad::GetAxis(JoyAxis axis) const{
 	const float value = axisState[axis];
 	constexpr float maxValue = std::numeric_limits<unsigned char>::max();
 	float result = ((value / maxValue) * 2.0f) - 1.0f;
-
+	
 	if(axis == JoyAxis::LeftY || axis == JoyAxis::RightY){
 		result = -result;
 	}
+
+	return result;
+}
+
+float Gamepad::GetAxis(JoyAxis axis) const{
+	float result = GetAxisRaw(axis);
 
 	// TODO - Configurable deadzone
 	constexpr float deadzone = 0.25f;

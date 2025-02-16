@@ -15,6 +15,7 @@ namespace Input{
 	bool ButtonUp(uint32_t button, int player = -1);
 	bool ButtonHeld(uint32_t button, int player = -1);
 
+	float GetAxisRaw(JoyAxis axis, int player = -1);
 	float GetAxis(JoyAxis axis, int player = -1);
 };
 

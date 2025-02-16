@@ -44,6 +44,7 @@ public:
 	bool ButtonUp(uint32_t button) const;
 	bool ButtonHeld(uint32_t button) const;
 
+	float GetAxisRaw(JoyAxis axis) const;
 	float GetAxis(JoyAxis axis) const;
 
 private:

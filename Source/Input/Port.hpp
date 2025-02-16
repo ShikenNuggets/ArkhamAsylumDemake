@@ -17,6 +17,7 @@ public:
 	bool ButtonUp(uint32_t button, int slot_ = -1) const;
 	bool ButtonHeld(uint32_t button, int slot_ = -1) const;
 
+	float GetAxisRaw(JoyAxis axis, int slot_ = -1) const;
 	float GetAxis(JoyAxis axis, int slot_ = -1) const;
 
 	int GetPort() const{ return portNum; }
