@@ -24,7 +24,11 @@ $(BUILD_DIR):
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
-$(OBJ_DIR)/%.obj: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/Main.obj: $(SRC_DIR)/Main.cpp $(SRC_DIR) | $(OBJ_DIR)
+	@mkdir -p $(dir $@)
+	$(EE_CXX) $(EE_CXXFLAGS) $(EE_INCS) -c $< -o $@
+
+$(OBJ_DIR)/%.obj: $(SRC_DIR)/%.cpp $(SRC_DIR)/%.hpp $(SRC_DIR) | $(OBJ_DIR)
 	@mkdir -p $(dir $@)
 	$(EE_CXX) $(EE_CXXFLAGS) $(EE_INCS) -c $< -o $@
 
