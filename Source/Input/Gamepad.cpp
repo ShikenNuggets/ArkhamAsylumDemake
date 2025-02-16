@@ -73,10 +73,16 @@ float Gamepad::GetAxis(JoyAxis axis) const{
 		result = -result;
 	}
 
-	// TODO - Smooth out remaining range instead of just cutting off at the deadzone
 	// TODO - Configurable deadzone
-	if(result > -0.25f && result < 0.25f){
+	constexpr float deadzone = 0.25f;
+	if(result > -deadzone && result < deadzone){
 		return 0.0f;
+	}
+
+	if(result > 0.0f){
+		result = (result - deadzone) / (1.0f - deadzone);
+	}else{
+		result = (result + deadzone) / (1.0f - deadzone);
 	}
 
 	if(result < -1.0f){
