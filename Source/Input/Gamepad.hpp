@@ -17,7 +17,7 @@ enum class JoyAxis : uint8_t{
 
 class AxisState{
 public:
-	AxisState() : axisState{ 0, 0, 0, 0 }{}
+	AxisState() : axisState{ neutralValue, neutralValue, neutralValue, neutralValue }{}
 
 	unsigned char operator[](JoyAxis axis) const{
 		ASSERT(axis < JoyAxis::JoyAxis_MAX, "Invalid Axis value passed to AxisState[]");
@@ -30,6 +30,7 @@ public:
 	}
 
 private:
+	static constexpr unsigned char neutralValue = std::numeric_limits<unsigned char>::max() / 2;
 	unsigned char axisState[static_cast<uint8_t>(JoyAxis::JoyAxis_MAX)];
 };
 
