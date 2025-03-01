@@ -13,27 +13,7 @@ public:
 	~Camera();
 
 	// TODO - This is just for testing
-	inline void Update(){
-		constexpr float moveSpeed = 50.0f;
-		constexpr float frameTime = 1.0f / 60.0f;
-
-		position[0] += Input::GetAxis(JoyAxis::LeftX) * frameTime * moveSpeed;
-		position[1] += Input::GetAxis(JoyAxis::LeftY) * frameTime * moveSpeed;
-		
-		if(Input::ButtonHeld(PAD_L1)){
-			position[2] += frameTime * moveSpeed;
-		}else if(Input::ButtonHeld(PAD_R1)){
-			position[2] -= frameTime * moveSpeed;
-		}
-
-		if(Input::ButtonDown(PAD_CROSS)){
-			if(Time::timeScale >= 1.0f){
-				Time::timeScale = 0.25f;
-			}else{
-				Time::timeScale = 1.0f;
-			}
-		}
-	}
+	void Update();
 
 	void GetWorldView(MATRIX& mat); //TODO - This should be const
 
