@@ -7,8 +7,8 @@ Yet another 3D game engine. But this one runs on the PS2!
 | Essential Features |  |
 |-------------------------------------------------------------|--|
 | Basic 3D Rendering | ✓ |
-| Model Loading | |
-| Textures | |
+| Model Loading | ✓ |
+| Textures | ✓ |
 | Character Animation | |
 | Controller Input | ✓ |
 | Text Rendering | |
@@ -17,6 +17,7 @@ Yet another 3D game engine. But this one runs on the PS2!
 | Collision Detection | |
 | Game AI | |
 | Audio | |
+| Video Player | |
 
 Build Instructions
 ---
