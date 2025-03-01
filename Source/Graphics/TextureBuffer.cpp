@@ -6,7 +6,7 @@
 #include <graph_vram.h>
 #include <packet.h>
 
-TextureBuffer::TextureBuffer(unsigned int width, unsigned int height, uint8_t* data){
+TextureBuffer::TextureBuffer(unsigned int width_, unsigned int height_, uint8_t* data) : width(width_), height(height_){
 	// Setup buffer
 	texBuffer.width = width;
 	texBuffer.psm = GS_PSM_24;
@@ -24,9 +24,17 @@ TextureBuffer::TextureBuffer(unsigned int width, unsigned int height, uint8_t* d
 
 	packet_free(packet);
 
+	Bind();
+}
+
+TextureBuffer::~TextureBuffer(){
+	graph_vram_free(texBuffer.address);
+}
+
+void TextureBuffer::Bind(){
 	// Prepare the texture for use
-	packet = packet_init(10, PACKET_NORMAL); // TODO - Should I just reuse the last packet?
-	q = packet->data;
+	packet_t* packet = packet_init(10, PACKET_NORMAL); // TODO - Should I just reuse the last packet?
+	qword_t* q = packet->data;
 
 	lod_t lod;
 	lod.calculation = LOD_USE_K;
@@ -55,8 +63,4 @@ TextureBuffer::TextureBuffer(unsigned int width, unsigned int height, uint8_t* d
 	dma_wait_fast();
 
 	packet_free(packet);
-}
-
-TextureBuffer::~TextureBuffer(){
-	graph_vram_free(texBuffer.address);
 }
