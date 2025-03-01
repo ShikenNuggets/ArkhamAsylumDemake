@@ -11,6 +11,9 @@
 #include <packet.h>
 
 Renderer::Renderer(unsigned int width_, unsigned int height_) : frameBuffer(width_, height_), depthBuffer(width_, height_), width(width_), height(height_), packets{ nullptr, nullptr }, packetCtx(0){
+	dma_channel_initialize(DMA_CHANNEL_GIF, nullptr, 0);
+	dma_channel_fast_waits(DMA_CHANNEL_GIF);
+	
 	packet_t* packet = packet_init(16, PACKET_NORMAL);
 
 	// This is our generic qword pointer.
@@ -36,6 +39,8 @@ Renderer::Renderer(unsigned int width_, unsigned int height_) : frameBuffer(widt
 	packets[1] = packet_init(1024, PACKET_NORMAL);
 
 	create_view_screen(viewScreenMatrix, graph_aspect_ratio(), -3.00f, 3.00f, -3.00f, 3.00f, 1.00f, 2000.00f);
+
+	dma_wait_fast();
 }
 
 Renderer::~Renderer(){

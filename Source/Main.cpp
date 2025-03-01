@@ -19,16 +19,12 @@ static constexpr int gScreenHeight = 480;
 
 int main(){
 	LOG_INFO("Launching PS2Engine...");
-	dma_channel_initialize(DMA_CHANNEL_GIF, nullptr, 0);
-	dma_channel_fast_waits(DMA_CHANNEL_GIF);
 
 	Renderer renderer = Renderer(640, 480);
 	renderer.SetClearColor(0, 0, 0);
 
 	SceneManager sceneManager = SceneManager();
 	sceneManager.SwitchScene<TestScene>();
-
-	dma_wait_fast();
 
 	Input::Init();
 
