@@ -7,9 +7,12 @@
 #include "GameObject.hpp"
 #include "Utils.hpp"
 #include "Game/Scene.hpp"
+#include "Game/SceneManager.hpp"
 #include "Graphics/Camera.hpp"
 #include "Graphics/Renderer.hpp"
 #include "Input/Input.hpp"
+
+#include "_Test/TestScene.hpp"
 
 static constexpr int gScreenWidth = 640;
 static constexpr int gScreenHeight = 480;
@@ -22,12 +25,8 @@ int main(){
 	Renderer renderer = Renderer(640, 480);
 	renderer.SetClearColor(0, 0, 0);
 
-	Scene currentScene;
-
-	currentScene.AddObject(-16.0f, 16.0f, 0.0f);
-	currentScene.AddObject(16.0f, 16.0f, 0.0f);
-	currentScene.AddObject(-16.0f, -16.0f, 0.0f);
-	currentScene.AddObject(16.0f, -16.0f, 0.0f);
+	SceneManager sceneManager = SceneManager();
+	sceneManager.SwitchScene<TestScene>();
 
 	dma_wait_fast();
 
@@ -36,8 +35,13 @@ int main(){
 	while(true){
 		Input::Update();
 
-		currentScene.Update();
-		renderer.Render(currentScene.GetCamera(), currentScene.GetGameObjects());
+		auto* currentScene = sceneManager.CurrentScene();
+		if(currentScene == nullptr){
+			continue;
+		}
+
+		currentScene->Update();
+		renderer.Render(currentScene->GetCamera(), currentScene->GetGameObjects());
 	}
 	
 	return 0;
