@@ -10,7 +10,7 @@ EE_OBJS=$(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.obj, $(wildcard $(SRC_DIR)/*.c
 EE_INCS += -I$(SRC_DIR) 
 EE_LIBS += -lstdc++ -ldma -lgraph -ldraw -lkernel -ldebug -lpacket -lmath3d -lpad
 
-EE_CXXFLAGS += -Wall --std=c++17
+EE_CXXFLAGS += -Wall -Wextra --std=c++17
 EE_LDFLAGS = -L$(PSDSDK)/ee/common/lib -L$(PS2SDK)/ee/lib
 
 ISO_TGT=$(BUILD_DIR)/test.iso
