@@ -80,7 +80,7 @@ float Gamepad::GetAxis(JoyAxis axis) const{
 	float result = GetAxisRaw(axis);
 
 	// TODO - Configurable deadzone
-	constexpr float deadzone = 0.25f;
+	constexpr float deadzone = 0.3f;
 	if(result > -deadzone && result < deadzone){
 		return 0.0f;
 	}
