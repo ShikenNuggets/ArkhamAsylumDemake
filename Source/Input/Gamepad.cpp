@@ -69,7 +69,7 @@ float Gamepad::GetAxisRaw(JoyAxis axis) const{
 	constexpr float maxValue = std::numeric_limits<unsigned char>::max();
 	float result = ((value / maxValue) * 2.0f) - 1.0f;
 	
-	if(axis == JoyAxis::LeftY || axis == JoyAxis::RightY){
+	if(axis != JoyAxis::LeftX){
 		result = -result;
 	}
 
