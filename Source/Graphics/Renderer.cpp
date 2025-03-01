@@ -40,7 +40,7 @@ Renderer::Renderer(unsigned int width_, unsigned int height_) : frameBuffer(widt
 
 	create_view_screen(viewScreenMatrix, graph_aspect_ratio(), -3.00f, 3.00f, -3.00f, 3.00f, 1.00f, 2000.00f);
 
-	dma_wait_fast();
+	dma_wait_fast(); // TODO - is this needed?
 }
 
 Renderer::~Renderer(){
@@ -49,8 +49,6 @@ Renderer::~Renderer(){
 }
 
 void Renderer::Render(Camera& camera, const std::vector<GameObject*>& gameObjects){
-	qword_t* q = nullptr;
-
 	packet_t* current = packets[packetCtx];
 
 	// Create the local_world matrix.
@@ -65,12 +63,8 @@ void Renderer::Render(Camera& camera, const std::vector<GameObject*>& gameObject
 		go->GetMesh().Update(local_screen);
 	}
 
-	// Grab our dmatag pointer for the dma chain.
-	qword_t* dmatag = current->data;
-
 	// Now grab our qword pointer and increment past the dmatag.
-	q = dmatag;
-	q++;
+	qword_t* q = current->data;
 
 	// Clear framebuffer but don't update zbuffer.
 	q = draw_disable_tests(q, 0, depthBuffer.Get());
@@ -84,12 +78,9 @@ void Renderer::Render(Camera& camera, const std::vector<GameObject*>& gameObject
 	// Setup a finish event.
 	q = draw_finish(q);
 
-	// Define our dmatag for the dma chain.
-	DMATAG_END(dmatag, (q - current->data) - 1, 0, 0, 0);
-
 	// Now send our current dma chain.
 	dma_wait_fast();
-	dma_channel_send_chain(DMA_CHANNEL_GIF, current->data, q - current->data, 0, 0);
+	dma_channel_send_normal(DMA_CHANNEL_GIF, current->data, q - current->data, 0, 0);
 
 	// Now switch our packets so we can process data while the DMAC is working.
 	packetCtx ^= 1;
