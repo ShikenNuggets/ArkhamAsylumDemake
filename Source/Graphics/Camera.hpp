@@ -4,6 +4,7 @@
 #include <math3d.h>
 
 #include "Debug.hpp"
+#include "Time.hpp"
 #include "Input/Input.hpp"
 
 class Camera{
@@ -23,6 +24,14 @@ public:
 			position[2] += frameTime * moveSpeed;
 		}else if(Input::ButtonHeld(PAD_R1)){
 			position[2] -= frameTime * moveSpeed;
+		}
+
+		if(Input::ButtonDown(PAD_CROSS)){
+			if(Time::timeScale >= 1.0f){
+				Time::timeScale = 0.25f;
+			}else{
+				Time::timeScale = 1.0f;
+			}
 		}
 	}
 
