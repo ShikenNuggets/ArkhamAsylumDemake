@@ -17,6 +17,7 @@ private:
 	VECTOR* transformedVerts;
 	xyz_t* vertexBuffer;
 	color_t* colorBuffer;
+	texel_t* texCoordBuffer;
 
 	prim_t prim;
 	color_t color;
