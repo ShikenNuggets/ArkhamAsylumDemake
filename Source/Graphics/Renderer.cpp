@@ -10,6 +10,10 @@
 #include <graph_vram.h>
 #include <packet.h>
 
+#include "Graphics/ScreenQuad.hpp"
+
+ScreenQuad* sq; // TODO - For testing only, plz fix this
+
 Renderer::Renderer(unsigned int width_, unsigned int height_) : frameBuffer(width_, height_), depthBuffer(width_, height_), width(width_), height(height_), packets{ nullptr, nullptr }, packetCtx(0){
 	dma_channel_initialize(DMA_CHANNEL_GIF, nullptr, 0);
 	dma_channel_fast_waits(DMA_CHANNEL_GIF);
@@ -41,11 +45,15 @@ Renderer::Renderer(unsigned int width_, unsigned int height_) : frameBuffer(widt
 	create_view_screen(viewScreenMatrix, graph_aspect_ratio(), -3.00f, 3.00f, -3.00f, 3.00f, 1.00f, 2000.00f);
 
 	dma_wait_fast(); // TODO - is this needed?
+
+	sq = new ScreenQuad();
 }
 
 Renderer::~Renderer(){
 	packet_free(packets[0]);
 	packet_free(packets[1]);
+
+	delete sq;
 }
 
 void Renderer::Render(Camera& camera, const std::vector<GameObject*>& gameObjects){
@@ -66,13 +74,27 @@ void Renderer::Render(Camera& camera, const std::vector<GameObject*>& gameObject
 	// Now grab our qword pointer and increment past the dmatag.
 	qword_t* q = current->data;
 
+	uint8_t clearRToUse = clearR;
+	uint8_t clearGToUse = clearR;
+	uint8_t clearBToUse = clearR;
+
+	if(sq != nullptr){
+		clearRToUse = 0x0;
+		clearGToUse = 0x0;
+		clearBToUse = 0x0;
+	}
+
 	// Clear framebuffer but don't update zbuffer.
 	q = draw_disable_tests(q, 0, depthBuffer.Get());
-	q = draw_clear(q, 0, Renderer::gOffsetX - (width / 2.0f), Renderer::gOffsetY - (height / 2.0f), width, height, clearR, clearG, clearB);
+	q = draw_clear(q, 0, Renderer::gOffsetX - (width / 2.0f), Renderer::gOffsetY - (height / 2.0f), width, height, clearRToUse, clearGToUse, clearBToUse);
 	q = draw_enable_tests(q, 0, depthBuffer.Get());
 
-	for(auto* go : gameObjects){
-		q = go->GetMesh().Render(q);
+	if(sq == nullptr){
+		for(auto* go : gameObjects){
+			q = go->GetMesh().Render(q);
+		}
+	}else{
+		q = sq->Render(q);
 	}
 
 	// Setup a finish event.
