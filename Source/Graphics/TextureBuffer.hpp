@@ -10,6 +10,8 @@ public:
 	TextureBuffer(unsigned int width_, unsigned int height_, uint8_t* data);
 	~TextureBuffer();
 
+	void LoadNewTexture(unsigned int width_, unsigned int height_, uint8_t* data);
+
 	const texbuffer_t* Get() const{ return &texBuffer; }
 	texbuffer_t* Get(){ return &texBuffer; }
 
@@ -19,6 +21,8 @@ private:
 	texbuffer_t texBuffer;
 	unsigned int width;
 	unsigned int height;
+
+	void AllocateVRAM(unsigned int width_, unsigned int height_);
 };
 
 #endif //!PS2E_TEXTURE_BUFFER_H

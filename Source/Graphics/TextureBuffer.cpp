@@ -6,13 +6,22 @@
 #include <graph_vram.h>
 #include <packet.h>
 
-TextureBuffer::TextureBuffer(unsigned int width_, unsigned int height_, uint8_t* data) : width(width_), height(height_){
-	// Setup buffer
-	texBuffer.width = width;
-	texBuffer.psm = GS_PSM_24;
-	texBuffer.address = graph_vram_allocate(width, height, GS_PSM_24, GRAPH_ALIGN_BLOCK);
+TextureBuffer::TextureBuffer(unsigned int width_, unsigned int height_, uint8_t* data) : width(0), height(0){
+	texBuffer.address = 0;
+	LoadNewTexture(width_, height_, data);
+	Bind();
+}
 
-	// DMA the actual texture data to the buffer
+TextureBuffer::~TextureBuffer(){
+	graph_vram_free(texBuffer.address);
+}
+
+void TextureBuffer::LoadNewTexture(unsigned int width_, unsigned int height_, uint8_t* data){
+	AllocateVRAM(width_, height_);
+	if(texBuffer.address == 0){
+		return;
+	}
+
 	packet_t* packet = packet_init(50, PACKET_NORMAL);
 	
 	qword_t* q = packet->data;
@@ -23,12 +32,6 @@ TextureBuffer::TextureBuffer(unsigned int width_, unsigned int height_, uint8_t*
 	dma_wait_fast();
 
 	packet_free(packet);
-
-	Bind();
-}
-
-TextureBuffer::~TextureBuffer(){
-	graph_vram_free(texBuffer.address);
 }
 
 void TextureBuffer::Bind(){
@@ -63,4 +66,24 @@ void TextureBuffer::Bind(){
 	dma_wait_fast();
 
 	packet_free(packet);
+}
+
+void TextureBuffer::AllocateVRAM(unsigned int width_, unsigned int height_){
+	if(width_ == width && height == height_){
+		return;
+	}
+
+	if(texBuffer.address != 0){
+		graph_vram_free(texBuffer.address);
+	}
+
+	width = width_;
+	height = height_;
+	if(width == 0 || height == 0){
+		return;
+	}
+
+	texBuffer.width = width_;
+	texBuffer.psm = GS_PSM_24;
+	texBuffer.address = graph_vram_allocate(width_, height_, GS_PSM_24, GRAPH_ALIGN_BLOCK);
 }
