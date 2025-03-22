@@ -9,6 +9,7 @@
 #include "Game/Scene.hpp"
 #include "Game/SceneManager.hpp"
 #include "Graphics/Camera.hpp"
+#include "Graphics/MoviePlayer.hpp"
 #include "Graphics/Renderer.hpp"
 #include "Graphics/TextureBuffer.hpp"
 #include "Input/Input.hpp"
@@ -32,6 +33,8 @@ int main(){
 
 	Input::Init();
 
+	MoviePlayer moviePlayer("Asylum_01", 2779);
+
 	while(true){
 		Input::Update();
 
@@ -39,6 +42,8 @@ int main(){
 		if(currentScene == nullptr){
 			continue;
 		}
+
+		moviePlayer.Update();
 
 		currentScene->Update();
 		renderer.Render(currentScene->GetCamera(), currentScene->GetGameObjects());
