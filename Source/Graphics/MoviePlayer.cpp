@@ -19,12 +19,12 @@ void MoviePlayer::Update(){
 		return;
 	}
 
+	currentFrameIdx++; // TODO - Ideally don't skip frames, but this gives us adequate performance for now
 	if(dupeThisFrame){
 		dupeThisFrame = false;
 		return;
 	}
 
-	currentFrameIdx++;
 	BindCurrentFrame();
 	dupeThisFrame = true;
 }
