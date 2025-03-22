@@ -16,6 +16,7 @@ private:
 	std::vector<uint8_t> buffer;
 	const char* path;
 	TextureBuffer* currentFrame;
+	bool dupeThisFrame;
 	int16_t currentFrameIdx;
 	int16_t numFrames;
 

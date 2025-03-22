@@ -6,7 +6,7 @@
 
 #include "Debug.hpp"
 
-MoviePlayer::MoviePlayer(const char* moviePath, int16_t numFrames_) : path(moviePath), currentFrame(nullptr), currentFrameIdx(1), numFrames(numFrames_){
+MoviePlayer::MoviePlayer(const char* moviePath, int16_t numFrames_) : path(moviePath), currentFrame(nullptr), dupeThisFrame(true), currentFrameIdx(1), numFrames(numFrames_){
 	BindCurrentFrame();
 }
 
@@ -19,8 +19,14 @@ void MoviePlayer::Update(){
 		return;
 	}
 
+	if(dupeThisFrame){
+		dupeThisFrame = false;
+		return;
+	}
+
 	currentFrameIdx++;
 	BindCurrentFrame();
+	dupeThisFrame = true;
 }
 
 void MoviePlayer::BindCurrentFrame(){
@@ -55,10 +61,9 @@ void MoviePlayer::BindCurrentFrame(){
 	buffer.clear();
 	buffer.insert(buffer.begin(), std::istreambuf_iterator<char>(input), {});
 
-	if(currentFrame != nullptr){
-		delete currentFrame;
-		currentFrame = nullptr;
+	if(currentFrame == nullptr){
+		currentFrame = new TextureBuffer(256, 256, buffer.data());
+	}else{
+		currentFrame->LoadNewTexture(256, 256, buffer.data());
 	}
-
-	currentFrame = new TextureBuffer(256, 256, buffer.data());
 }
