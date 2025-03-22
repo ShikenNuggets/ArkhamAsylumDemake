@@ -50,12 +50,13 @@ ScreenQuad::ScreenQuad(){
 qword_t* ScreenQuad::Render(qword_t* q){
 	// Draw the triangles using triangle primitive type.
 	// Use a 64-bit pointer to simplify adding data to the packet.
-	u64* dw = reinterpret_cast<u64*>(draw_prim_start(q, 0, &prim, &color));
+	q = draw_prim_start(q, 0, &prim, &color);
 
 	for(int i = 0; i < quadPointsCount; i++){
-		*dw = quadTexCoordBuffer[quadPoints[i]].uv; dw++;
-		*dw = quadVertexBuffer[quadPoints[i]].xyz; dw++;
+		q->dw[0] = quadTexCoordBuffer[quadPoints[i]].uv;
+		q->dw[1] = quadVertexBuffer[quadPoints[i]].xyz;
+		q++;
 	}
 
-	return draw_prim_end(reinterpret_cast<qword_t*>(dw), 2, ((u64)GIF_REG_ST) << 0 | ((u64)GIF_REG_XYZ2) << 4);
+	return draw_prim_end(q, 2, ((u64)GIF_REG_ST) << 0 | ((u64)GIF_REG_XYZ2) << 4);
 }
