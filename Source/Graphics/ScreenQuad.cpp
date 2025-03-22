@@ -23,8 +23,6 @@ constexpr xyz_t quadVertexBuffer[quadVertexCount] = {
 	-9223372034958857215ul	// 27649, 28929
 };
 
-constexpr color_t quadColorBuffer[quadVertexCount] = { 0ul, 0ul, 0ul, 0ul };
-
 constexpr texel_t quadTexCoordBuffer[quadVertexCount] = {
 	4575657222473777152ul,	// 1.0f, 1.0f
 	1065353216ul,			// 1.0f, 0.0f
@@ -55,16 +53,9 @@ qword_t* ScreenQuad::Render(qword_t* q){
 	u64* dw = reinterpret_cast<u64*>(draw_prim_start(q, 0, &prim, &color));
 
 	for(int i = 0; i < quadPointsCount; i++){
-		*dw = quadColorBuffer[quadPoints[i]].rgbaq; dw++;
 		*dw = quadTexCoordBuffer[quadPoints[i]].uv; dw++;
 		*dw = quadVertexBuffer[quadPoints[i]].xyz; dw++;
 	}
 
-	// Check if we're in middle of a qword or not.
-	if(reinterpret_cast<u32>(dw) % 16){
-		*dw = 0; dw++;
-	}
-
-	// Only 3 registers rgbaq/st/xyz were used (standard STQ reglist)
-	return draw_prim_end(reinterpret_cast<qword_t*>(dw), 3, DRAW_STQ_REGLIST);
+	return draw_prim_end(reinterpret_cast<qword_t*>(dw), 2, ((u64)GIF_REG_ST) << 0 | ((u64)GIF_REG_XYZ2) << 4);
 }
