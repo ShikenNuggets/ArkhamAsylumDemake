@@ -45,19 +45,12 @@ void MoviePlayer::BindCurrentFrame(){
 
 	frameName += ".bmp.raw";
 
-	std::fstream filestream;
-	filestream.open(frameName, std::ios::in);
-
-	if(!filestream.is_open()){
-		LOG_ERROR("Could not open %s for reading!", frameName.c_str());
-	}
-
 	std::ifstream input(frameName, std::ios::binary);
 	if(!input.is_open()){
+		LOG_ERROR("Could not open %s for reading!", frameName.c_str());
 		return;
 	}
 
-	//auto data = std::vector<uint8_t>(std::istreambuf_iterator<char>(input), {}); //TODO - This is not particularly efficient
 	buffer.clear();
 	buffer.insert(buffer.begin(), std::istreambuf_iterator<char>(input), {});
 
