@@ -33,7 +33,7 @@ int main(){
 
 	Input::Init();
 
-	MoviePlayer moviePlayer("Asylum_01", 2779);
+	MoviePlayer moviePlayer("ASYLUM_01", 2779);
 
 	while(true){
 		Input::Update();

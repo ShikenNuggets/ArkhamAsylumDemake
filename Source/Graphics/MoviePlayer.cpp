@@ -7,7 +7,7 @@
 #include "Debug.hpp"
 
 MoviePlayer::MoviePlayer(const char* moviePath, int16_t numFrames_) : path(moviePath), currentFrame(nullptr), dupeThisFrame(true), currentFrameIdx(1), numFrames(numFrames_){
-	std::string frameName = path + std::string(".raw");
+	std::string frameName = path + std::string(".RAW");
 	file = std::ifstream(frameName, std::ios::binary);
 	if(!file.is_open()){
 		LOG_ERROR("Could not open %s for reading!", frameName);
