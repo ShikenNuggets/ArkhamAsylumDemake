@@ -7,6 +7,13 @@
 #include "Debug.hpp"
 
 MoviePlayer::MoviePlayer(const char* moviePath, int16_t numFrames_) : path(moviePath), currentFrame(nullptr), dupeThisFrame(true), currentFrameIdx(1), numFrames(numFrames_){
+	std::string frameName = path + std::string(".raw");
+	file = std::ifstream(frameName, std::ios::binary);
+	if(!file.is_open()){
+		LOG_ERROR("Could not open %s for reading!", frameName);
+		return;
+	}
+
 	BindCurrentFrame();
 }
 
@@ -30,11 +37,8 @@ void MoviePlayer::Update(){
 }
 
 void MoviePlayer::BindCurrentFrame(){
-	std::string frameName = path + std::string(".raw");
-
-	std::ifstream input(frameName, std::ios::binary);
-	if(!input.is_open()){
-		LOG_ERROR("Could not open %s for reading!", frameName);
+	if(!file.is_open()){
+		LOG_ERROR("Cutscene file is not available, skipping frame");
 		return;
 	}
 
@@ -42,10 +46,9 @@ void MoviePlayer::BindCurrentFrame(){
 
 	buffer.clear();
 	buffer.resize(frameSize);
-	//buffer.insert(buffer.begin(), std::istreambuf_iterator<char>(input), {});
 	
-	input.seekg((currentFrameIdx - 1) * frameSize);
-	input.read(reinterpret_cast<char*>(buffer.data()), frameSize);
+	file.seekg((currentFrameIdx - 1) * frameSize);
+	file.read(reinterpret_cast<char*>(buffer.data()), frameSize);
 
 	if(currentFrame == nullptr){
 		currentFrame = new TextureBuffer(256, 256, buffer.data());
