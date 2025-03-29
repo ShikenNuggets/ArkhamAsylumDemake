@@ -21,6 +21,7 @@ private:
 	bool dupeThisFrame;
 	int16_t currentFrameIdx;
 	int16_t numFrames;
+	std::streampos curStreamPos;
 
 	void BindCurrentFrame();
 };

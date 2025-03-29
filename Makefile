@@ -40,5 +40,5 @@ clean:
 
 .PHONY: iso
 iso:
-	mkisofs -l -o $(ISO_TGT) $(EE_BIN) SYSTEM.CNF
+	mkisofs -l -o $(ISO_TGT) $(EE_BIN) SYSTEM.CNF Asylum_01.jpv
 	cp $(ISO_TGT) /mnt/e/Games/PS2/DVD/BatmanArkhamAsylum.iso
