@@ -22,6 +22,9 @@ private:
 	int16_t currentFrameIdx;
 	int16_t numFrames;
 	std::streampos curStreamPos;
+	unsigned char* frameData;
 
+	void LoadFrame();
+	void DecompressFrame();
 	void BindCurrentFrame();
 };

@@ -8,13 +8,15 @@
 #include "Debug.hpp"
 #include "ThirdParty/jpgd.hpp"
 
-MoviePlayer::MoviePlayer(const char* moviePath, int16_t numFrames_) : path(moviePath), currentFrame(nullptr), dupeThisFrame(true), currentFrameIdx(1), numFrames(numFrames_), curStreamPos(0){
+MoviePlayer::MoviePlayer(const char* moviePath, int16_t numFrames_) : path(moviePath), currentFrame(nullptr), dupeThisFrame(true), currentFrameIdx(1), numFrames(numFrames_), curStreamPos(0), frameData(nullptr){
 	std::string frameName = path + std::string(".JPV");
 	file = std::ifstream(frameName, std::ios::binary);
 	if(!file.is_open()){
 		LOG_ERROR("Could not open %s for reading!", frameName);
 		return;
 	}
+
+	buffer.reserve(8192);
 
 	BindCurrentFrame();
 }
@@ -24,21 +26,23 @@ MoviePlayer::~MoviePlayer(){
 }
 
 void MoviePlayer::Update(){
-	if(currentFrameIdx >= numFrames){
+	if(currentFrameIdx >= numFrames || !file.is_open()){
 		return;
 	}
 	
 	if(dupeThisFrame){
+		LoadFrame();
 		dupeThisFrame = false;
 		return;
 	}
 
 	currentFrameIdx++;
+	DecompressFrame();
 	BindCurrentFrame();
 	dupeThisFrame = true;
 }
 
-void MoviePlayer::BindCurrentFrame(){
+void MoviePlayer::LoadFrame(){
 	if(!file.is_open()){
 		return;
 	}
@@ -75,23 +79,35 @@ void MoviePlayer::BindCurrentFrame(){
 		return;
 	}
 
+	curStreamPos += fileSize;
+}
+
+void MoviePlayer::DecompressFrame(){
+	if(buffer.empty()){
+		return;
+	}
+
+	std::free(frameData);
+
 	int w;
 	int h;
 	int actualComps = 0;
-	auto* testData = jpgd::decompress_jpeg_image_from_memory(buffer.data(), buffer.size(), &w, &h, &actualComps, 3);
-	if(testData == nullptr){
+	frameData = jpgd::decompress_jpeg_image_from_memory(buffer.data(), buffer.size(), &w, &h, &actualComps, 3);
+	if(frameData == nullptr){
 		LOG_ERROR("JPEG decompression failed on frame %d!", currentFrameIdx);
 		file.close();
 		return;
 	}
+}
+
+void MoviePlayer::BindCurrentFrame(){
+	if(frameData == nullptr){
+		return;
+	}
 	
 	if(currentFrame == nullptr){
-		currentFrame = new TextureBuffer(w, h, testData);
+		currentFrame = new TextureBuffer(256, 256, frameData);
 	}else{
-		currentFrame->LoadNewTexture(w, h, testData);
+		currentFrame->LoadNewTexture(256, 256, frameData);
 	}
-
-	std::free(testData);
-
-	curStreamPos += fileSize;
 }
