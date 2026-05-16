@@ -21,6 +21,12 @@ Yet another 3D game engine. But this one runs on the PS2!
 
 Build Instructions
 ---
-1. [Setup ps2sdk](https://github.com/ps2dev/ps2dev)
-2. Open the Linux terminal in the project directory
-3. Use `make` to create the ELF, then optionally `make iso` to create the ISO
+1. Setup [ps2sdk](https://github.com/ps2dev/ps2dev) on your local machine, or use [their docker container](https://hub.docker.com/r/ps2dev/ps2dev).
+2. Configure CMake:
+```
+cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$PS2DEV/share/ps2dev.cmake
+```
+3. Build to create the ELF:
+```
+cmake --build build
+```
