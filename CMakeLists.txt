@@ -43,6 +43,9 @@ target_link_libraries(ArkhamAsylumDemake
 		packet
 		math3d
 		pad
+		mpeg
+		gskit
+		dmakit
 )
 
 # Add PS2SDK library search paths
@@ -60,3 +63,5 @@ message(STATUS "Target OS:   ${CMAKE_SYSTEM_NAME}")
 message(STATUS "Target Arch: ${CMAKE_SYSTEM_PROCESSOR}")
 message(STATUS "Host OS:     ${CMAKE_HOST_SYSTEM_NAME}")
 message(STATUS "PS2SDK Path: ${PS2SDK}")
+message(STATUS "C Compiler:  ${CMAKE_C_COMPILER}")
+message(STATUS "CXX Compiler: ${CMAKE_CXX_COMPILER}")
