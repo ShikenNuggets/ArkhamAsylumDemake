@@ -1,0 +1,7 @@
+{
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.buildType": "Release",
+    "cmake.configureArgs": [
+        "-DCMAKE_TOOLCHAIN_FILE=${env:PS2DEV}/share/ps2dev.cmake"
+    ]
+}
