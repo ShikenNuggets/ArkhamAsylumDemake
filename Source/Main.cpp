@@ -9,7 +9,7 @@
 #include "Game/Scene.hpp"
 #include "Game/SceneManager.hpp"
 #include "Graphics/Camera.hpp"
-#include "Graphics/MoviePlayer.hpp"
+#include "Graphics/MoviePlayer3.hpp"
 #include "Graphics/Renderer.hpp"
 #include "Graphics/TextureBuffer.hpp"
 #include "Input/Input.hpp"
@@ -23,6 +23,11 @@ static constexpr int gScreenHeight = 480;
 int main(){
 	LOG_INFO("Launching PS2Engine...");
 
+	{
+		auto moviePlayer = MoviePlayer3();
+		moviePlayer.PlayVideo("BmGame/Movies/baa_logo_run_v5_h264.bik.m1v", 640, 360);
+	}
+
 	Renderer renderer = Renderer(640, 480);
 	renderer.SetClearColor(32, 32, 32);
 
@@ -33,8 +38,6 @@ int main(){
 
 	Input::Init();
 
-	MoviePlayer moviePlayer("ASYLUM_01", 2779);
-
 	while(true){
 		Input::Update();
 
@@ -42,8 +45,6 @@ int main(){
 		if(currentScene == nullptr){
 			continue;
 		}
-
-		moviePlayer.Update();
 
 		currentScene->Update();
 		renderer.Render(currentScene->GetCamera(), currentScene->GetGameObjects());
