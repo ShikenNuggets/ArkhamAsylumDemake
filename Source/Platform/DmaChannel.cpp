@@ -13,6 +13,16 @@ DmaChannel::~DmaChannel()
 	dma_channel_shutdown(channelNumber, 0);
 }
 
+void DmaChannel::SendNormal(const packet_t* packet)
+{
+	dma_channel_send_normal(channelNumber, packet->data, packet->qwc, 0, 0);
+}
+
+void DmaChannel::SendChain(const packet_t* packet)
+{
+	dma_channel_send_chain(channelNumber, packet->data, packet->qwc, 0, 0);
+}
+
 DmaChannel& DmaChannel::GIFChannel()
 {
 	static DmaChannel channel(DMA_CHANNEL_GIF);
