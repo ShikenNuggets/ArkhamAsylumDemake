@@ -10,7 +10,6 @@
 #include <unistd.h>
 
 #include <dma.h>
-#include <dmaKit.h>
 #include <dma_tags.h>
 #include <draw.h>
 #include <gif_tags.h>
@@ -22,6 +21,7 @@
 #include <packet.h>
 
 #include "Debug.hpp"
+#include "Graphics/FrameBuffer.hpp"
 
 /* get the whole file (or first 24MB) into memory for simplicity */
 #define MAX_SIZE (1024 * 1024 * 24)
@@ -104,23 +104,14 @@ void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 	dma_channel_initialize(DMA_CHANNEL_GIF, nullptr, 0);
 	dma_channel_fast_waits(DMA_CHANNEL_GIF);
 
-	graph_initialize(0, screenWidth, screenHeight, GS_PSM_32, 0, 0);
-
-	framebuffer_t frame{};
-	frame.width = screenWidth;
-	frame.height = screenHeight;
-	frame.mask = 0;
-	frame.psm = GS_PSM_32;
-	frame.address = graph_vram_allocate(frame.width, frame.height, frame.psm, GRAPH_ALIGN_PAGE);
-
-	textureAddress = 0;
+	auto frameBuffer = FrameBuffer(screenWidth, screenHeight);
 
 	zbuffer_t z{};
 	z.enable = 0;
 
 	packet_t* envPacket = packet_init(10, PACKET_NORMAL);
 	qword_t* q = envPacket->data;
-	q = draw_setup_environment(q, 0, &frame, &z);
+	q = draw_setup_environment(q, 0, frameBuffer.Get(), &z);
 	q = draw_clear(q, 0, 0, 0, static_cast<float>(screenWidth), static_cast<float>(screenHeight), 0, 0, 0);
 	dma_channel_send_normal(DMA_CHANNEL_GIF, envPacket->data, q - envPacket->data, 0, 0);
 	packet_free(envPacket);
@@ -172,7 +163,7 @@ int MoviePlayer3::SetDMA()
 		return 0;
 	}
 
-	dmaKit_wait(DMA_CHANNEL_toIPU, 0);
+	dma_channel_wait(DMA_CHANNEL_toIPU, 0);
 	dma_channel_send_normal(DMA_CHANNEL_toIPU, transferPtr, 2048 >> 4, 0, 0);
 	transferPtr += 2048;
 
