@@ -13,9 +13,25 @@ DmaChannel::~DmaChannel()
 	dma_channel_shutdown(channelNumber, 0);
 }
 
+void DmaChannel::Wait()
+{
+	dma_channel_wait(channelNumber, 0);
+}
+
+void DmaChannel::FastWait()
+{
+	dma_wait_fast();
+}
+
 void DmaChannel::SendNormal(const packet_t* packet)
 {
 	dma_channel_send_normal(channelNumber, packet->data, packet->qwc, 0, 0);
+}
+
+void DmaChannel::SendNormalBytes(uint8_t* data, size_t byteCount)
+{
+	int qwc = (byteCount + 15) / 16; // Round up to nearest qword
+	dma_channel_send_normal(channelNumber, static_cast<void*>(data), qwc, 0, 0);
 }
 
 void DmaChannel::SendChain(const packet_t* packet)

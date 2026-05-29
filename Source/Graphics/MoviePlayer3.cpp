@@ -102,8 +102,8 @@ void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 	eof = false;
 
 	// Grab DMA channels in case they're not already initialized
-	DmaChannel GifChannel = DmaChannel::GIFChannel();
-	DmaChannel ToIPUChannel = DmaChannel::ToIPUChannel();
+	DmaChannel& GifChannel = DmaChannel::GIFChannel();
+	[[maybe_unused]] DmaChannel& ToIPUChannel = DmaChannel::ToIPUChannel();
 
 	auto frameBuffer = FrameBuffer(screenWidth, screenHeight);
 
@@ -115,7 +115,8 @@ void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 	q = draw_setup_environment(q, 0, frameBuffer.Get(), &z);
 	q = draw_clear(q, 0, 0, 0, static_cast<float>(screenWidth), static_cast<float>(screenHeight), 0, 0, 0);
 	q = draw_finish(q);
-	dma_channel_send_normal(DMA_CHANNEL_GIF, envPacket->data, q - envPacket->data, 0, 0);
+	envPacket->qwc = q - envPacket->data;
+	GifChannel.SendNormal(envPacket);
 	packet_free(envPacket);
 
 	s64 currentPresentationTimeStamp = 0;
@@ -139,10 +140,10 @@ void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 
 		dma_wait_fast();
         
-        dma_channel_send_chain(DMA_CHANNEL_GIF, transferPacket->data, transferPacket->qwc, 0, 0);
+		GifChannel.SendChain(transferPacket);
         dma_wait_fast();
 
-        dma_channel_send_normal(DMA_CHANNEL_GIF, drawPacket->data, drawPacket->qwc, 0, 0);
+		GifChannel.SendNormal(drawPacket);
         
         graph_wait_vsync();
         graph_wait_vsync();
@@ -158,15 +159,16 @@ int MoviePlayer3::SetDMACallback(void* userData)
 
 int MoviePlayer3::SetDMA()
 {
+	DmaChannel& ToIPUChannel = DmaChannel::ToIPUChannel();
+
 	if (transferPtr - mpegData >= mpegDataSize)
 	{
-		LOG_INFO("EOF");
 		eof = true; // Mark EOF if we've sent all the data
 		return 0;
 	}
 
-	dma_channel_wait(DMA_CHANNEL_toIPU, 0);
-	dma_channel_send_normal(DMA_CHANNEL_toIPU, transferPtr, 2048 >> 4, 0, 0);
+	ToIPUChannel.Wait();
+	ToIPUChannel.SendNormalBytes(transferPtr, 2048);
 	transferPtr += 2048;
 
 	return 1;	
