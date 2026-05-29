@@ -114,6 +114,7 @@ void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 	qword_t* q = envPacket->data;
 	q = draw_setup_environment(q, 0, frameBuffer.Get(), &z);
 	q = draw_clear(q, 0, 0, 0, static_cast<float>(screenWidth), static_cast<float>(screenHeight), 0, 0, 0);
+	q = draw_finish(q);
 	dma_channel_send_normal(DMA_CHANNEL_GIF, envPacket->data, q - envPacket->data, 0, 0);
 	packet_free(envPacket);
 
