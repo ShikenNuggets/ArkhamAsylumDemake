@@ -22,6 +22,7 @@
 
 #include "Debug.hpp"
 #include "Graphics/FrameBuffer.hpp"
+#include "Platform/DmaChannel.hpp"
 
 /* get the whole file (or first 24MB) into memory for simplicity */
 #define MAX_SIZE (1024 * 1024 * 24)
@@ -100,9 +101,9 @@ void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 	transferPtr = mpegData;
 	eof = false;
 
-	dma_channel_initialize(DMA_CHANNEL_toIPU, nullptr, 0);
-	dma_channel_initialize(DMA_CHANNEL_GIF, nullptr, 0);
-	dma_channel_fast_waits(DMA_CHANNEL_GIF);
+	// Grab DMA channels in case they're not already initialized
+	DmaChannel GifChannel = DmaChannel::GIFChannel();
+	DmaChannel ToIPUChannel = DmaChannel::ToIPUChannel();
 
 	auto frameBuffer = FrameBuffer(screenWidth, screenHeight);
 

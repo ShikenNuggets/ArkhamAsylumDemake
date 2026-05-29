@@ -11,12 +11,12 @@
 #include <packet.h>
 
 #include "Graphics/ScreenQuad.hpp"
+#include "Platform/DmaChannel.hpp"
 
 ScreenQuad* sq; // TODO - For testing only, plz fix this
 
 Renderer::Renderer(unsigned int width_, unsigned int height_) : frameBuffer(width_, height_), depthBuffer(width_, height_), width(width_), height(height_), packets{ nullptr, nullptr }, packetCtx(0){
-	dma_channel_initialize(DMA_CHANNEL_GIF, nullptr, 0);
-	dma_channel_fast_waits(DMA_CHANNEL_GIF);
+	DmaChannel GifChannel = DmaChannel::GIFChannel();
 	
 	packet_t* packet = packet_init(16, PACKET_NORMAL);
 
@@ -46,7 +46,7 @@ Renderer::Renderer(unsigned int width_, unsigned int height_) : frameBuffer(widt
 
 	dma_wait_fast(); // TODO - is this needed?
 
-	sq = new ScreenQuad();
+	//sq = new ScreenQuad();
 }
 
 Renderer::~Renderer(){
