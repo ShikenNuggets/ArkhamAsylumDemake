@@ -126,7 +126,7 @@ void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 	{
 		s64 framePresentationTimestamp{};
 		int result = MPEG_Picture(decodedData, &framePresentationTimestamp);
-		if (eof)
+		if (eof || result == 0)
 		{
 			LOG_INFO("Reached end of video data");
 			break;
