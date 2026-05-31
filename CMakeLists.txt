@@ -2,6 +2,17 @@ cmake_minimum_required (VERSION 3.28)
 
 project ("ArkhamAsylumDemake" LANGUAGES C CXX)
 
+include(FetchContent)
+FetchContent_Declare(
+	SDL3
+	GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+	GIT_TAG release-3.4.10
+	SYSTEM
+	EXCLUDE_FROM_ALL
+)
+set(SDL_TEST_LIBRARY OFF)
+FetchContent_MakeAvailable(SDL3)
+
 file (GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 	"Source/*.cpp"
 	"Source/*.h"
@@ -22,6 +33,11 @@ target_include_directories(ArkhamAsylumDemake
 	PUBLIC
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Source>
 		$<INSTALL_INTERFACE:include>
+)
+
+target_link_libraries(ArkhamAsylumDemake
+	PUBLIC
+		SDL3::SDL3
 )
 
 # PS2SDK Configuration - pull from environment variable
