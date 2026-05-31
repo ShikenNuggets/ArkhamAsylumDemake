@@ -1,33 +1,18 @@
 #include "MoviePlayer3.hpp"
 
-#include <fcntl.h>
 #include <fstream>
-#include <iostream>
 #include <malloc.h>
-#include <memory>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 #include <dma.h>
-#include <dma_tags.h>
-#include <draw.h>
-#include <gif_tags.h>
-#include <graph.h>
-#include <gs_psm.h>
-#include <gs_gp.h>
 #include <kernel.h>
-#include <libmpeg.h>
-#include <packet.h>
 
 #include "Debug.hpp"
-#include "Graphics/FrameBuffer.hpp"
 #include "Platform/DmaChannel.hpp"
 
 /* get the whole file (or first 24MB) into memory for simplicity */
 #define MAX_SIZE (1024 * 1024 * 24)
 
-MoviePlayer3::MoviePlayer3() : mpegData(nullptr), transferPtr(nullptr), mpegDataSize(0), transferPacket(nullptr), drawPacket(nullptr), textureAddress(0), decodedData(nullptr), eof(false)
+MoviePlayer3::MoviePlayer3(SDL_Renderer* inRenderer) : renderer(inRenderer), videoTexture(nullptr), mpegData(nullptr), transferPtr(nullptr), mpegDataSize(0), decodedData(nullptr), eof(false)
 {
 }
 
@@ -43,22 +28,14 @@ MoviePlayer3::~MoviePlayer3()
 		free(decodedData);
 	}
 
-	if (transferPacket)
+	if (videoTexture)
 	{
-		packet_free(transferPacket);
-	}
-
-	if (drawPacket)
-	{
-		packet_free(drawPacket);
+		SDL_DestroyTexture(videoTexture);
 	}
 }
 
 void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 {
-	int screenWidth = 640;
-	int screenHeight = 448;
-
 	videoWidth = width;
 	videoHeight = height;
 
@@ -102,22 +79,8 @@ void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 	eof = false;
 
 	// Grab DMA channels in case they're not already initialized
-	DmaChannel& GifChannel = DmaChannel::GIFChannel();
+	[[maybe_unused]] DmaChannel& GifChannel = DmaChannel::GIFChannel();
 	[[maybe_unused]] DmaChannel& ToIPUChannel = DmaChannel::ToIPUChannel();
-
-	auto frameBuffer = FrameBuffer(screenWidth, screenHeight);
-
-	zbuffer_t z{};
-	z.enable = 0;
-
-	packet_t* envPacket = packet_init(10, PACKET_NORMAL);
-	qword_t* q = envPacket->data;
-	q = draw_setup_environment(q, 0, frameBuffer.Get(), &z);
-	q = draw_clear(q, 0, 0, 0, static_cast<float>(screenWidth), static_cast<float>(screenHeight), 0, 0, 0);
-	q = draw_finish(q);
-	envPacket->qwc = q - envPacket->data;
-	GifChannel.SendNormal(envPacket);
-	packet_free(envPacket);
 
 	s64 currentPresentationTimeStamp = 0;
 	MPEG_Initialize(SetDMACallback, this, InitCallback, this, &currentPresentationTimeStamp);
@@ -132,21 +95,50 @@ void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 			break;
 		}
 
-		if (result != 1)
+		if (result < 0 || result > 1)
 		{
 			LOG_ERROR("Error decoding video frame, MPEG_Picture returned: %d", result);
 			return;
 		}
 
 		dma_wait_fast();
-        
-		GifChannel.SendChain(transferPacket);
-        dma_wait_fast();
 
-		GifChannel.SendNormal(drawPacket);
-        
-        graph_wait_vsync();
-        graph_wait_vsync();
+		uint8_t* linearPixels = nullptr;
+		int pitch = 0;
+		if (SDL_LockTexture(videoTexture, nullptr, reinterpret_cast<void**>(&linearPixels), &pitch))
+		{
+			uint8_t* lpImg = decodedData;
+			for (int lY = 0; lY < mpegHeight; lY += 16)
+			{
+				for (int lX = 0; lX < mpegWidth; lX += 16)
+				{
+					for (int row = 0; row < 16; ++row)
+					{
+						uint8_t* dest = linearPixels + ((lY + row + 1) * pitch) + ((lX + 1) * 4);
+						memcpy(dest, lpImg, 16 * 4);
+						lpImg += 16 * 4;
+					}
+				}
+			}
+
+			SDL_UnlockTexture(videoTexture);
+		}
+		else
+		{
+			LOG_ERROR("Failed to lock SDL texture for drawing: %s", SDL_GetError());
+			return;
+		}
+
+		SDL_FRect srcRect = { 
+            1.0f, 
+            1.0f, 
+            static_cast<float>(mpegWidth), 
+            static_cast<float>(mpegHeight) 
+        };
+
+		SDL_RenderClear(renderer);
+		SDL_RenderTexture(renderer, videoTexture, &srcRect, nullptr);
+		SDL_RenderPresent(renderer);
 	}
 
 	MPEG_Destroy();
@@ -181,7 +173,10 @@ void* MoviePlayer3::InitCallback(void* userData, MPEGSequenceInfo* sequenceInfo)
 
 void* MoviePlayer3::InitCB(MPEGSequenceInfo* info)
 {
-	int lDataSize = info->m_Width * info->m_Height * 4;
+	mpegWidth = info->m_Width;
+	mpegHeight = info->m_Height;
+
+	int lDataSize = mpegWidth * mpegHeight * 4;
     if (!decodedData)
 	{
 		decodedData = static_cast<uint8_t*>(memalign(64, lDataSize));
@@ -189,81 +184,27 @@ void* MoviePlayer3::InitCB(MPEGSequenceInfo* info)
 
     SyncDCache(decodedData, decodedData + lDataSize);
 
-	if (textureAddress == 0)
+	if (videoTexture == nullptr)
 	{
-		textureAddress = graph_vram_allocate(info->m_Width, info->m_Height, GS_PSM_32, GRAPH_ALIGN_PAGE) >> 5;
-		LOG_INFO("Allocated off-screen texture %dx%d\n", info->m_Width, info->m_Height);
-	}
+		videoTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, mpegWidth + 2, mpegHeight + 2);
 
-    int lMBW = info->m_Width >> 4;
-    int lMBH = info->m_Height >> 4;
-    int lTBW = (info->m_Width + 63) >> 6;
-    
-    // CRITICAL: Aim the transfer at the off-screen texture, NOT 0!
-    int blockAddr = textureAddress; 
+		SDL_SetTextureBlendMode(videoTexture, SDL_BLENDMODE_NONE);
+		SDL_SetTextureScaleMode(videoTexture, SDL_SCALEMODE_LINEAR);
 
-    // -------------------------------------------------------------
-    // 1. TRANSFER PACKET (RAM -> Off-screen VRAM)
-    // -------------------------------------------------------------
-    if (transferPacket)
-	{
-		packet_free(transferPacket);
-	}
-
-    transferPacket = packet_init((12 + 12 * lMBW * lMBH) >> 1, PACKET_NORMAL);
-    qword_t* q = transferPacket->data;
-
-    DMATAG_CNT(q, 4, 0, 0, 0); q++;
-    PACK_GIFTAG(q, GIF_SET_TAG(3, 0, 0, 0, 0, 1), GIF_REG_AD); q++;
-    PACK_GIFTAG(q, GS_SET_SCISSOR(0, 639, 0, 447), GS_REG_SCISSOR_1); q++;
-    PACK_GIFTAG(q, GS_SET_TRXREG(16, 16), GS_REG_TRXREG); q++;
-    
-    // Uploading to blockAddr (m_texAddr)
-    PACK_GIFTAG(q, GS_SET_BITBLTBUF(0, 0, 0, blockAddr, lTBW, GS_PSM_32), GS_REG_BITBLTBUF); q++;
-
-    uint8_t* lpImg = decodedData;
-    for (int lY = 0; lY < info->m_Height; lY += 16)
-	{
-        for (int lX = 0; lX < info->m_Width; lX += 16, lpImg += 1024)
+		void* pixels = nullptr;
+		int pitch = 0;
+		if (SDL_LockTexture(videoTexture, nullptr, &pixels, &pitch))
 		{
-            DMATAG_CNT(q, 4, 0, 0, 0); q++;
-            PACK_GIFTAG(q, GIF_SET_TAG(2, 0, 0, 0, 0, 1), GIF_REG_AD); q++;
-            // Write perfectly to 0,0 of the texture buffer
-            PACK_GIFTAG(q, GS_SET_TRXPOS(0, 0, lX, lY, 0), GS_REG_TRXPOS); q++;
-            PACK_GIFTAG(q, GS_SET_TRXDIR(0), GS_REG_TRXDIR); q++;
-            PACK_GIFTAG(q, GIF_SET_TAG(64, 1, 0, 0, 2, 0), 0); q++;
-            DMATAG_REF(q, 64, reinterpret_cast<unsigned int>(lpImg), 0, 0, 0); q++;
-        }
-    }
+			memset(pixels, 0, pitch * mpegHeight);
+			SDL_UnlockTexture(videoTexture);
+		}
+		else
+		{
+			LOG_ERROR("Failed to lock SDL texture for clearing: %s", SDL_GetError());
+		}
 
-    transferPacket->qwc = q - transferPacket->data;
-    SyncDCache(transferPacket->data, (uint8_t*)transferPacket->data + (transferPacket->qwc * 16));
-
-    // -------------------------------------------------------------
-    // 2. DRAW PACKET (Off-screen VRAM -> Centered on TV)
-    // -------------------------------------------------------------
-    if (drawPacket)
-	{
-		packet_free(drawPacket);
+		LOG_INFO("Allocated SDL Streaming Texture %dx%d", mpegWidth, mpegHeight);
 	}
-
-    drawPacket = packet_init(8, PACKET_NORMAL); 
-    q = drawPacket->data;
-
-	int lTW = 10; // 2^10 = 1024 (Safely contains 640)
-    int lTH = 9;  // 2^9 = 512  (Safely contains 368)
-    
-    PACK_GIFTAG(q, GIF_SET_TAG(7, 1, 0, 0, 0, 1), GIF_REG_AD); q++;
-    PACK_GIFTAG(q, GS_SET_TEX1(0, 0, 0, 0, 0, 0, 0), GS_REG_TEX1_1); q++;
-    PACK_GIFTAG(q, GS_SET_TEX0(blockAddr, lTBW, GS_PSM_32, lTW, lTH, 1, 1, 0, 0, 0, 0, 0), GS_REG_TEX0_1); q++;
-    PACK_GIFTAG(q, GS_SET_PRIM(6, 0, 1, 0, 0, 0, 1, 0, 0), GS_REG_PRIM); q++;
-    PACK_GIFTAG(q, GS_SET_UV(0, 0), GS_REG_UV); q++;
-    PACK_GIFTAG(q, GS_SET_XYZ((2048 + 0) << 4, (2048 + 44) << 4, 0), GS_REG_XYZ2); q++;
-    PACK_GIFTAG(q, GS_SET_UV(640 << 4, 360 << 4), GS_REG_UV); q++;
-    PACK_GIFTAG(q, GS_SET_XYZ((2048 + 640) << 4, (2048 + 404) << 4, 0), GS_REG_XYZ2); q++;\
-
-    drawPacket->qwc = q - drawPacket->data;
-    SyncDCache(drawPacket->data, (uint8_t*)drawPacket->data + (drawPacket->qwc * 16));
 
     return decodedData;
 }

@@ -2,6 +2,7 @@
 
 #include <dma.h>
 #include <dma_tags.h>
+#include <SDL3/SDL.h>
 
 #include "Debug.hpp"
 #include "GameObject.hpp"
@@ -23,8 +24,29 @@ static constexpr int gScreenHeight = 480;
 int main(){
 	LOG_INFO("Launching PS2Engine...");
 
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+	SDL_Window* window = SDL_CreateWindow("Arkham Asylum Demake", gScreenWidth, gScreenHeight, 0);
+	if (!window)
 	{
-		auto moviePlayer = MoviePlayer3();
+		LOG_ERROR("Failed to create SDL window: %s", SDL_GetError());
+		return -1;
+	}
+
+	SDL_Renderer* sdlRenderer = SDL_CreateRenderer(window, nullptr);
+	if (!sdlRenderer)	{
+		LOG_ERROR("Failed to create SDL renderer: %s", SDL_GetError());
+		SDL_DestroyWindow(window);
+		return -1;
+	}
+
+	if (!SDL_SetRenderVSync(sdlRenderer, 1))
+	{
+		LOG_ERROR("Failed to set VSync on SDL renderer: %s", SDL_GetError());
+		return -1;
+	}
+
+	{
+		auto moviePlayer = MoviePlayer3(sdlRenderer);
 		moviePlayer.PlayVideo("BmGame/Movies/baa_logo_run_v5_h264.bik.m1v", 640, 360);
 	}
 
