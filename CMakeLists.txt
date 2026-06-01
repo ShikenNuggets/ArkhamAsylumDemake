@@ -14,6 +14,7 @@ set(SDL_TEST_LIBRARY OFF)
 FetchContent_MakeAvailable(SDL3)
 
 file (GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
+	"Source/*.c"
 	"Source/*.cpp"
 	"Source/*.h"
 	"Source/*.hpp"
