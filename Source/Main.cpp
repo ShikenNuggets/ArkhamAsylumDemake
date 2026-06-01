@@ -2,6 +2,7 @@
 
 #include <dma.h>
 #include <dma_tags.h>
+#include <kernel.h>
 #include <SDL3/SDL.h>
 
 #include "Debug.hpp"
@@ -50,6 +51,10 @@ int main(){
 		moviePlayer.PlayVideo("BmGame/Movies/baa_logo_run_v5_h264.bik.m1v", 640, 360);
 	}
 
+	// TODO - Fix the crash that occurs after this
+	SleepThread();
+	return 0;
+
 	Renderer renderer = Renderer(640, 480);
 	renderer.SetClearColor(32, 32, 32);
 
@@ -72,5 +77,6 @@ int main(){
 		renderer.Render(currentScene->GetCamera(), currentScene->GetGameObjects());
 	}
 	
+	SleepThread(); // Sleep to allow ps2link to take over (TODO: remove this or make it _DEBUG only or something later)
 	return 0;
 }
