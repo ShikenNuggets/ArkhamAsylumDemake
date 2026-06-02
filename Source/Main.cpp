@@ -51,6 +51,18 @@ int main(){
 		moviePlayer.PlayVideo("BmGame/Movies/baa_logo_run_v5_h264.m1v", 640, 360);
 	}
 
+	SDL_SetRenderDrawColor(sdlRenderer, 25, 25, 25, 0);
+	SDL_RenderClear(sdlRenderer);
+
+	SDL_SetRenderDrawColorFloat(sdlRenderer, 1.0f, 1.0f, 1.0f, 1.0f);
+	SDL_SetRenderScale(sdlRenderer, 2.0f, 2.0f);
+	SDL_RenderDebugText(sdlRenderer, 10, 10, "PS2 Engine - Arkham Asylum Demake");
+	SDL_SetRenderScale(sdlRenderer, 1.5f, 1.5f);
+	SDL_RenderDebugText(sdlRenderer, 10, 60, "Program complete, reset ps2link to run again");
+
+	SDL_RenderPresent(sdlRenderer);
+	SDL_UpdateWindowSurface(window);
+
 	// TODO - Fix the crash that occurs after this
 	SleepThread();
 	return 0;
