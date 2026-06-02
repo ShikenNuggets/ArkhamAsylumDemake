@@ -133,7 +133,7 @@ void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 	}
 	else
 	{
-		LOG_ERROR("Failed to decode audio file with stb_vorbis");
+		LOG_ERROR("Failed to decode audio file with stb_vorbis! Error: %d", totalSamples);
 	}
 
 	if (sampleRate != srcSpec.freq)
@@ -189,7 +189,7 @@ void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 			playedBytes = 0;
 		}
 
-        double audioTimeSeconds = static_cast<double>(playedBytes) / 192000.0;
+        double audioTimeSeconds = static_cast<double>(playedBytes) / static_cast<double>(totalBytes);
 		
 		// Video Playback
 		s64 framePresentationTimestamp{};
