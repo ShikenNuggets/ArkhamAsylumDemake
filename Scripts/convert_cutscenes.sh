@@ -9,7 +9,7 @@ fi
 INPUT=$1
 
 # Extract the filename without the extension
-BASENAME=${INPUT%.}
+BASENAME=${INPUT%.*}
 
 echo Converting $INPUT to ${BASENAME}.m1v...
 
