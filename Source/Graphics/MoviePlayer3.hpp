@@ -35,4 +35,9 @@ private:
 
 	int mpegWidth = 0;
 	int mpegHeight = 0;
+
+	size_t currentFrame = 0;
+	double fps = 29.97;
+
+	SDL_AudioStream* audioStream;
 };

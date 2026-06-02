@@ -48,7 +48,7 @@ int main(){
 
 	{
 		auto moviePlayer = MoviePlayer3(sdlRenderer);
-		moviePlayer.PlayVideo("BmGame/Movies/baa_logo_run_v5_h264.bik.m1v", 640, 360);
+		moviePlayer.PlayVideo("BmGame/Movies/baa_logo_run_v5_h264.m1v", 640, 360);
 	}
 
 	// TODO - Fix the crash that occurs after this
