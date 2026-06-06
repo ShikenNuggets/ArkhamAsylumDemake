@@ -22,6 +22,7 @@ public:
 
 private:
 	std::unique_ptr<FileBuffer> videoFileBuffer;
+	std::unique_ptr<FileBuffer> audioFileBuffer;
 
 	static int SetDMACallback(void* userData);
 	static void* InitCallback(void* userData, MPEGSequenceInfo* sequenceInfo);
@@ -32,7 +33,8 @@ private:
 	SDL_Renderer* renderer;
 	SDL_Texture* videoTexture;
 
-	static constexpr size_t videoBufferSize = 512 * 1024; // 512 KB per buffer
+	static constexpr size_t videoBufferSize = 256 * 1024; // 256 KB per buffer
+	static constexpr size_t audioBufferSize = 64 * 1024; // 64 KB per buffer
 
 	uint8_t* mpegBuffers[2];
 	size_t bufferSizes[2];

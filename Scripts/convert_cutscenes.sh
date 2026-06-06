@@ -27,7 +27,7 @@ if [ "$AUDIO_STREAM_COUNT" -gt 0 ]; then
         echo "Extracting audio stream #$i to ${BASENAME}_${i}.ogg..."
         
         # -map 0:a:$i dynamically selects the current audio stream in the loop
-        ffmpeg -y -i "$INPUT" -map 0:a:"$i" -c:a libvorbis -q:a 4 -ar 48000 -ac 2 "${BASENAME}_${i}.ogg"
+        ffmpeg -y -i "$INPUT" -map 0:a:"$i" -f s16le -acodec pcm_s16le -ar 48000 -ac 2 "${BASENAME}_${i}.pcm"
     done
 else
     echo "No audio streams found in $INPUT."

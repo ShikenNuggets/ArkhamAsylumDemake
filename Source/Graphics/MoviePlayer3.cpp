@@ -43,64 +43,50 @@ void MoviePlayer3::PlayVideo(const char* filePath)
 	videoFileBuffer = std::make_unique<FileBuffer>(filePath, videoBufferSize, eofPayload);
 
 	// Audio Loading and Setup
+	std::string audioFilePath = filePath;
+	size_t lastDotPos = audioFilePath.find_last_of('.');
+	if (lastDotPos != std::string::npos)
+	{
+		audioFilePath.replace(lastDotPos, audioFilePath.length() - lastDotPos, "_0.pcm");
+	}
+	else
+	{
+		audioFilePath += "_0.pcm";
+	}
+
+	audioFileBuffer = std::make_unique<FileBuffer>(audioFilePath, audioBufferSize);
+
 	SDL_AudioSpec srcSpec;
 	srcSpec.freq = 48000;
 	srcSpec.format = SDL_AUDIO_S16LE;
 	srcSpec.channels = 2;
 
 	SDL_AudioDeviceID audioDevice = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);
+	if (audioDevice == 0)
+	{
+		LOG_ERROR("Failed to open physical audio device: %s", SDL_GetError());
+		return;
+	}
 	
 	audioStream = SDL_CreateAudioStream(&srcSpec, nullptr);
 	if (!audioStream)
 	{
 		LOG_ERROR("Failed to create SDL audio stream: %s", SDL_GetError());
+		return;
 	}
 	else
 	{
 		SDL_ResumeAudioStreamDevice(audioStream);
 	}
 
-	SDL_BindAudioStream(audioDevice, audioStream);
-
-	int channels = 0;
-	int sampleRate = 0;
-	short* decodedAudioData = nullptr;
-
-	std::string audioFilePath = filePath;
-	size_t lastDotPos = audioFilePath.find_last_of('.');
-	if (lastDotPos != std::string::npos)
+	if (!SDL_BindAudioStream(audioDevice, audioStream))
 	{
-		audioFilePath.replace(lastDotPos, audioFilePath.length() - lastDotPos, "_0.ogg");
-	}
-	else
-	{
-		audioFilePath += "_0.ogg";
+		LOG_ERROR("Failed to bind SDL audio stream: %s", SDL_GetError());
 	}
 
-	int totalSamples = stb_vorbis_decode_filename(audioFilePath.c_str(), &channels, &sampleRate, &decodedAudioData);
-	int pcmOffset = 0;
-
-	int totalBytes = totalSamples * channels * sizeof(short);
-	int bytesPerSecond = sampleRate * channels * sizeof(short);
-	int targetQueueBytes = bytesPerSecond;
-	if (totalSamples > 0 && decodedAudioData != nullptr)
-	{
-		LOG_INFO("Decoded %d audio samples at %d Hz with %d channels", totalSamples, sampleRate, channels);
-	}
-	else
-	{
-		LOG_ERROR("Failed to decode audio file with stb_vorbis! Error: %d", totalSamples);
-	}
-
-	if (sampleRate != srcSpec.freq)
-	{
-		LOG_ERROR("Decoded audio sample rate (%d) does not match SDL audio device sample rate (%d)", sampleRate, srcSpec.freq);
-	}
-
-	if (channels != srcSpec.channels)
-	{
-		LOG_ERROR("Decoded audio channel count (%d) does not match SDL audio device channel count (%d)", channels, srcSpec.channels);
-	}
+	int bytesPerSecond = 48000 * 2 * sizeof(short);
+	int targetQueueBytes = bytesPerSecond * 2;
+	size_t totalAudioBytesSubmitted = 0;
 
 	// Grab DMA channels in case they're not already initialized
 	[[maybe_unused]] DmaChannel& GifChannel = DmaChannel::GIFChannel();
@@ -112,40 +98,49 @@ void MoviePlayer3::PlayVideo(const char* filePath)
 	while (!eof)
 	{
 		// Audio Feeder
-		if (audioStream && totalBytes > 0)
+		if (audioStream && !audioFileBuffer->IsExhausted())
 		{
 			int queuedBytes = SDL_GetAudioStreamQueued(audioStream);
-			if (queuedBytes < targetQueueBytes)
+			if (queuedBytes >= 0 && queuedBytes < (targetQueueBytes / 4)) // Wait until the audio stream is actually running low
 			{
-				int bytesRemaining = totalBytes - pcmOffset;
-
-				//LOG_INFO("Audio stream queue is low (%d bytes queued), %d bytes remaining to queue", queuedBytes, bytesRemaining);
-				int spaceInQueue = targetQueueBytes - queuedBytes;
-				int bytesToQueue = (bytesRemaining > spaceInQueue) ? spaceInQueue : bytesRemaining;
-
-				if (bytesToQueue > 0)
+				auto audioChunk = audioFileBuffer->GetChunk();
+				if (!audioChunk.empty())
 				{
-					//LOG_INFO("Queueing %d bytes of audio data to SDL stream (offset %d)", bytesToQueue, pcmOffset);
-					SDL_PutAudioStreamData(audioStream, reinterpret_cast<uint8_t*>(decodedAudioData) + pcmOffset, bytesToQueue);
-					pcmOffset += bytesToQueue;
+					int spaceInQueue = targetQueueBytes - queuedBytes;
+					int bytesToQueue = std::min<size_t>(audioChunk.size(), spaceInQueue);
+
+					if (bytesToQueue > 0)
+					{
+						if (!SDL_PutAudioStreamData(audioStream, audioChunk.data(), bytesToQueue))
+						{
+							LOG_ERROR("Failed to push data to SDL audio stream: %s", SDL_GetError());
+						}
+						else
+						{
+							audioFileBuffer->Advance(bytesToQueue);
+							totalAudioBytesSubmitted += bytesToQueue;
+						}
+					}
 				}
-			}
-			else if (queuedBytes <= 0)
-			{
-				LOG_INFO("Audio stream queue is empty");
-				break;
 			}
 		}
 
 		// Audio/Video Sync
 		int audioQueueBytes = SDL_GetAudioStreamQueued(audioStream);
-		int playedBytes = static_cast<int>(pcmOffset) - audioQueueBytes;
+		int playedBytes = static_cast<int>(totalAudioBytesSubmitted) - audioQueueBytes;
         if (playedBytes < 0)
 		{
 			playedBytes = 0;
 		}
 
-        double audioTimeSeconds = static_cast<double>(playedBytes) / static_cast<double>(totalBytes);
+        double audioTimeSeconds = static_cast<double>(playedBytes) / static_cast<double>(bytesPerSecond);
+		double videoTimeSeconds = static_cast<double>(currentFrame) / fps;
+
+		if (videoTimeSeconds > audioTimeSeconds + 0.01)
+		{
+			SDL_Delay(1); // Tiny sleep to slow down video and let audio catch up
+			continue;
+		}
 
 		// Video Playback
 		s64 framePresentationTimestamp{};
@@ -163,14 +158,9 @@ void MoviePlayer3::PlayVideo(const char* filePath)
 			break;
 		}
 
-		double videoTimeSeconds = static_cast<double>(currentFrame) / fps;
-		if (videoTimeSeconds < audioTimeSeconds - 0.05)
+		if (videoTimeSeconds < audioTimeSeconds - 0.033)
 		{
 			continue; // Drop the frame to speed up and stay in sync with audio
-		}
-		else if (videoTimeSeconds > audioTimeSeconds + 0.05)
-		{
-			SDL_Delay(1); // Tiny sleep to slow down and let audio catch up
 		}
 
 		dma_wait_fast();
