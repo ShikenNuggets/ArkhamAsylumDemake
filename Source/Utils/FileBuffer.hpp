@@ -13,7 +13,7 @@
 class FileBuffer
 {
 public:
-	FileBuffer(std::string_view filePath, size_t bufferSize, size_t paddingSize, std::span<const uint8_t> payload = {});
+	FileBuffer(std::string_view filePath, size_t bufferSize, std::span<const uint8_t> payload = {});
 	~FileBuffer();
 
 	FileBuffer(const FileBuffer&) = delete;

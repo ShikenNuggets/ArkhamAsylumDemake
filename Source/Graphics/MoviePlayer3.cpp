@@ -40,7 +40,7 @@ void MoviePlayer3::PlayVideo(const char* filePath)
 	eofPayload[2] = 0x01;
 	eofPayload[3] = 0xB7;
 
-	videoFileBuffer = std::make_unique<FileBuffer>(filePath, videoBufferSize, 4, eofPayload);
+	videoFileBuffer = std::make_unique<FileBuffer>(filePath, videoBufferSize, eofPayload);
 
 	// Audio Loading and Setup
 	SDL_AudioSpec srcSpec;

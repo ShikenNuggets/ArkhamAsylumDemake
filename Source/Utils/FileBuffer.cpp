@@ -5,8 +5,8 @@
 
 #include "Debug.hpp"
 
-FileBuffer::FileBuffer(std::string_view filePath, size_t bufferSize, size_t paddingSize, std::span<const uint8_t> endPayload)
-	: bufferSize(bufferSize), paddingSize(paddingSize), buffers{{ nullptr, nullptr }}, validBytes{{ 0, 0 }}, bufferReady{{ false, false }},
+FileBuffer::FileBuffer(std::string_view filePath, size_t bufferSize, std::span<const uint8_t> endPayload)
+	: bufferSize(bufferSize), paddingSize(endPayload.size()), buffers{{ nullptr, nullptr }}, validBytes{{ 0, 0 }}, bufferReady{{ false, false }},
 	  readIndex(0), readOffset(0), writeIndex(0), file(filePath.data(), std::ios::binary | std::ios::ate), fileHitEof(false), isExhausted(false),
 	  threadActive(true)
 {
