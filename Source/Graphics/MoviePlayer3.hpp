@@ -1,20 +1,28 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 #include <ios>
+#include <memory>
 
 #include <libmpeg.h>
 #include <SDL3/SDL.h>
 
-class MoviePlayer3{
+#include "Utils/FileBuffer.hpp"
+
+class MoviePlayer3
+{
 public:
 	MoviePlayer3(SDL_Renderer* inRenderer);
 	~MoviePlayer3();
 
-	void PlayVideo(const char* filePath, int width = 640, int height = 360);
+	void PlayVideo(const char* filePath);
 
 private:
+	std::unique_ptr<FileBuffer> videoFileBuffer;
+
 	static int SetDMACallback(void* userData);
 	static void* InitCallback(void* userData, MPEGSequenceInfo* sequenceInfo);
 
@@ -24,14 +32,14 @@ private:
 	SDL_Renderer* renderer;
 	SDL_Texture* videoTexture;
 
-	uint8_t* mpegData;
-	uint8_t* transferPtr;
-	std::streamsize mpegDataSize;
-	uint8_t* decodedData;
+	static constexpr size_t videoBufferSize = 512 * 1024; // 512 KB per buffer
 
+	uint8_t* mpegBuffers[2];
+	size_t bufferSizes[2];
+	std::atomic<bool> bufferReady[2];
+
+	uint8_t* decodedData;
 	bool eof;
-	int videoWidth;
-	int videoHeight;
 
 	int mpegWidth = 0;
 	int mpegHeight = 0;

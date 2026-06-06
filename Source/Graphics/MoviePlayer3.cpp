@@ -1,7 +1,6 @@
 #include "MoviePlayer3.hpp"
 
 #include <algorithm>
-#include <fstream>
 #include <malloc.h>
 
 #include <dma.h>
@@ -11,21 +10,12 @@
 #include "Platform/DmaChannel.hpp"
 #include "ThirdParty/stb/stb.h"
 
-/* get the whole file (or first 24MB) into memory for simplicity */
-#define MAX_SIZE (1024 * 1024 * 24)
-
-MoviePlayer3::MoviePlayer3(SDL_Renderer* inRenderer) : renderer(inRenderer), videoTexture(nullptr), mpegData(nullptr), transferPtr(nullptr), mpegDataSize(0), decodedData(nullptr), eof(false)
+MoviePlayer3::MoviePlayer3(SDL_Renderer* inRenderer) : renderer(inRenderer), videoTexture(nullptr), decodedData(nullptr), eof(false), audioStream(nullptr)
 {
-	audioStream = nullptr;
 }
 
 MoviePlayer3::~MoviePlayer3()
 {
-	if (mpegData)
-	{
-		free(mpegData);
-	}
-
 	if (decodedData)
 	{
 		free(decodedData);
@@ -42,49 +32,15 @@ MoviePlayer3::~MoviePlayer3()
 	}
 }
 
-void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
+void MoviePlayer3::PlayVideo(const char* filePath)
 {
-	videoWidth = width;
-	videoHeight = height;
+	auto eofPayload = std::vector<uint8_t>(4, 0x0);
+	eofPayload[0] = 0x00;
+	eofPayload[1] = 0x00;
+	eofPayload[2] = 0x01;
+	eofPayload[3] = 0xB7;
 
-	std::ifstream file(filePath, std::ios::binary | std::ios::ate);
-	if (!file.is_open())
-	{
-		LOG_ERROR("Could not open file: %s", filePath);
-		return;
-	}
-
-	std::streamsize size = file.tellg();
-	file.seekg(0, std::ios::beg);
-	if (size <= 0)
-	{
-		LOG_ERROR("Could not obtain file size for: %s", filePath);
-		return;
-	}
-
-	mpegDataSize = (size > MAX_SIZE) ? MAX_SIZE : size;
-	mpegData = static_cast<uint8_t*>(memalign(64, mpegDataSize + 4));
-	if (!mpegData)
-	{
-		LOG_ERROR("Could not allocate memory for MPEG data");
-		return;
-	}
-
-	if (!file.read(reinterpret_cast<char*>(mpegData), mpegDataSize))
-	{
-		LOG_ERROR("Could not read file: %s", filePath);
-		return;
-	}
-
-	// Inject end code so playback always stops gracefully even if the end code is missing or video is corrupted/malformed
-	mpegData[mpegDataSize]     = 0x00;
-    mpegData[mpegDataSize + 1] = 0x00;
-    mpegData[mpegDataSize + 2] = 0x01;
-    mpegData[mpegDataSize + 3] = 0xB7;
-    mpegDataSize += 4;
-
-	transferPtr = mpegData;
-	eof = false;
+	videoFileBuffer = std::make_unique<FileBuffer>(filePath, videoBufferSize, 4, eofPayload);
 
 	// Audio Loading and Setup
 	SDL_AudioSpec srcSpec;
@@ -190,7 +146,7 @@ void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 		}
 
         double audioTimeSeconds = static_cast<double>(playedBytes) / static_cast<double>(totalBytes);
-		
+
 		// Video Playback
 		s64 framePresentationTimestamp{};
 		int result = MPEG_Picture(decodedData, &framePresentationTimestamp);
@@ -204,7 +160,7 @@ void MoviePlayer3::PlayVideo(const char* filePath, int width, int height)
 		if (result < 0 || result > 1)
 		{
 			LOG_ERROR("Error decoding video frame, MPEG_Picture returned: %d", result);
-			return;
+			break;
 		}
 
 		double videoTimeSeconds = static_cast<double>(currentFrame) / fps;
@@ -267,19 +223,30 @@ int MoviePlayer3::SetDMACallback(void* userData)
 
 int MoviePlayer3::SetDMA()
 {
-	DmaChannel& ToIPUChannel = DmaChannel::ToIPUChannel();
-
-	if (transferPtr - mpegData >= mpegDataSize)
+	if (eof)
 	{
-		eof = true; // Mark EOF if we've sent all the data
 		return 0;
 	}
 
-	ToIPUChannel.Wait();
-	ToIPUChannel.SendNormalBytes(transferPtr, 2048);
-	transferPtr += 2048;
+	if (videoFileBuffer->IsExhausted())
+	{
+		eof = true;
+		return 0;
+	}
 
-	return 1;	
+	std::span<uint8_t> chunk = videoFileBuffer->GetChunk();
+	if (chunk.empty())
+	{
+		return 0;
+	}
+
+	const size_t bytesToSend = std::min<size_t>(chunk.size(), 2048);
+	const size_t dmaTransferSize = (bytesToSend + 15) & ~15;
+
+	DmaChannel& ToIPUChannel = DmaChannel::ToIPUChannel();
+	ToIPUChannel.SendNormalBytes(chunk.data(), dmaTransferSize);
+	videoFileBuffer->Advance(bytesToSend);
+	return 1;
 }
 
 void* MoviePlayer3::InitCallback(void* userData, MPEGSequenceInfo* sequenceInfo)
